@@ -121,11 +121,12 @@
 						var feature = event.feature;
 						var id = feature.geometry.id;
 						var area = feature.geometry.getGeodesicArea()/1000000;
-						var abs = feature.attributes.asb2006;
 						var name = feature.attributes.name;
+						var id = feature.attributes.ward93_id;
+						/*var abs = feature.attributes.asb2006;
 						var bur = feature.attributes.burglar_10;
-						var vehicle = feature.attributes.vehicle_10;
-						var output = "Ward: " + name + "</br>Area: " + area.toFixed(2) + "</br> Anti-social behaviour events [2006]: " + abs + "</br>Burglary incidents [2006]: " + bur + 			"</br>Vechicle crime incidents [2006]: " + vehicle;
+						var vehicle = feature.attributes.vehicle_10;*/
+						var output = "Ward: " + name + " (id: "+id+")</br>Area: " + area.toFixed(2);
 						document.getElementById("output-id").innerHTML = output;
 
 						//====================================================
@@ -147,5 +148,9 @@
 				map.addLayer(geo_layer);
 				//map.addLayer(wms_layer);
 			
+	}
+	
+	function saveSelection(){
+		alert("Saved!");
 	}
             
