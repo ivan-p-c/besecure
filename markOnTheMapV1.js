@@ -1,7 +1,11 @@
-var geo_layer,wms_layer;
+//=======GLOBAL VARIABLES=======
+		   
+		   var geo_layer;
 		   var map;
+		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
 		   
+//=======INITIALIZING FUNCTION=======
 
            function init(){
 			    //local variables with SRS projections: mercator for base map and WGS84 for additional layers
@@ -56,16 +60,9 @@ var geo_layer,wms_layer;
 				select_style.addRules([rule_highlight]);
 				var styles = new OpenLayers.StyleMap({'default': style,'select': select_style});
 				
-				
+				//Adding base OSM layer to the map
 				map.addLayer(osmLayer);
 				
-				//Defining vector layer from Geoserver
-				 /*wms_layer = new OpenLayers.Layer.WMS
-					(
-					"Northern Ireland Wards",
-					"http://localhost:8080/geoserver/wms",
-					{layers: 'cite:osni_ward93', transparent:true, format: 'image/png'}, {isBaseLayer: false, opacity: 0.5}
-					); */
 				
 				//WFS LAYER definition
 				geo_layer = new OpenLayers.Layer.Vector("Wards", {
@@ -83,6 +80,13 @@ var geo_layer,wms_layer;
 					geometryName: "geom"
 					})
 				});
+				
+				asb2012_layer = new OpenLayers.Layer.WMS
+					(
+					"ASB",
+					"http://localhost:8080/geoserver/wms",
+					{layers: 'cite:asb_belfast2012', transparent:true, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
+					); 
 
 				//Positioning and zooming map
                 map.setCenter(new OpenLayers.LonLat(-5.92, 54.59).transform(geographic,mercator), defaultZoom);
@@ -139,6 +143,7 @@ var geo_layer,wms_layer;
 				
 				
 				//Adding layers
+				map.addLayer(asb2012_layer);
 				map.addLayer(geo_layer);
 				//map.addLayer(wms_layer);
 			
