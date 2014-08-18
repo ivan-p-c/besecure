@@ -24,8 +24,8 @@
 				//rule used for all polygons
 				var rule_fsa = new OpenLayers.Rule({
 					symbolizer: {
-					fillColor: "#ff9a9a",
-					fillOpacity: 0.5,
+					fillColor: "#5a5aff",
+					fillOpacity: 0.2,
 					strokeColor: "#000000",
 					strokeWidth: 1,
 					strokeDashstyle: "dash",
@@ -81,6 +81,7 @@
 					})
 				});
 				
+				//Geometrical points sample layer, with ASB data from Belfast in 2012 (ONLY FOR TESTING PURPOSES)
 				asb2012_layer = new OpenLayers.Layer.WMS
 					(
 					"ASB",
@@ -88,6 +89,7 @@
 					{layers: 'cite:asb_belfast2012', transparent:true, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
 					); 
 
+				
 				//Positioning and zooming map
                 map.setCenter(new OpenLayers.LonLat(-5.92, 54.59).transform(geographic,mercator), defaultZoom);
 				//Adding navigating controller
@@ -101,7 +103,8 @@
 				//Adding a Layer Switch controller
 				map.addControl(new OpenLayers.Control.LayerSwitcher());
 
-				//Select feature
+				
+				//Select feature(s) in the selected area (e.g. ward) --> FOR TESTING PURPOSES
 				var selectItem = new OpenLayers.Control.SelectFeature(
 					geo_layer, 
 					{toggle: true, clickout:true}
@@ -126,7 +129,7 @@
 						/*var abs = feature.attributes.asb2006;
 						var bur = feature.attributes.burglar_10;
 						var vehicle = feature.attributes.vehicle_10;*/
-						var output = "Ward: " + name + " (id: "+id+")</br>Area: " + area.toFixed(2);
+						var output = "Ward: " + name + " (id: "+id+")</br>Area: " + area.toFixed(2) + " m2";
 						document.getElementById("output-id").innerHTML = output;
 
 						//====================================================
@@ -139,6 +142,17 @@
 						}
 						//document.getElementById("output-id").innerHTML = output;
 						//====================================================
+						 var htmlSelect=document.getElementById('selectAttribute');
+						 var selectBoxOption;
+
+						for (var key in geo_layer.features[1].attributes) {
+							if (geo_layer.features[0].attributes.hasOwnProperty(key)) {
+								selectBoxOption = document.createElement("option");
+								selectBoxOption.value = key;
+								selectBoxOption.text = key; 
+								htmlSelect.add(selectBoxOption, null); 
+							}
+						}
 					}
 				});
 				
@@ -151,6 +165,16 @@
 	}
 	
 	function saveSelection(){
-		alert("Saved!");
+		var request = OpenLayers.Request.GET({
+		url: "http://localhost:8080/geoserver/rest/workspaces/cite/featuretypes.xml",
+		callback: function(request) {
+			// Code here to handle the response, the request object contains the data
+			document.getElementById("output-id2").innerHTML = request.responseText;
+			//Save selection in a database table, including a timestamp
+			
+			//IMPORTANT: Initial testing code deleted: ASK ITTI (Tomasz and Marek) how to save selection and what method to use (Java? JQuery?) since plain Javascript is highly insecure
+			//...
+		}
+	});
 	}
             
