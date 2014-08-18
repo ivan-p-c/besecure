@@ -143,8 +143,9 @@
 						//document.getElementById("output-id").innerHTML = output;
 						//====================================================
 						 var htmlSelect=document.getElementById('selectAttribute');
-						 var selectBoxOption;
-
+						
+						removeOptions(htmlSelect);
+						
 						for (var key in geo_layer.features[1].attributes) {
 							if (geo_layer.features[0].attributes.hasOwnProperty(key)) {
 								selectBoxOption = document.createElement("option");
@@ -178,5 +179,15 @@
 			alert("Still not saving anything in the DB (will do soon)");
 		}
 	});
+	}
+	
+	
+	function removeOptions(selectbox)
+	{
+		var i;
+		for(i=selectbox.options.length-1;i>=0;i--)
+		{
+			selectbox.remove(i);
+		}
 	}
             
