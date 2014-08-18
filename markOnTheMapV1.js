@@ -158,7 +158,7 @@
 				
 				
 				//Adding layers
-				map.addLayer(asb2012_layer);
+				//map.addLayer(asb2012_layer);
 				map.addLayer(geo_layer);
 				//map.addLayer(wms_layer);
 			
@@ -169,11 +169,13 @@
 		url: "http://localhost:8080/geoserver/rest/workspaces/cite/featuretypes.xml",
 		callback: function(request) {
 			// Code here to handle the response, the request object contains the data
-			document.getElementById("output-id2").innerHTML = request.responseText;
+			
 			//Save selection in a database table, including a timestamp
 			
 			//IMPORTANT: Initial testing code deleted: ASK ITTI (Tomasz and Marek) how to save selection and what method to use (Java? JQuery?) since plain Javascript is highly insecure
 			//...
+			//document.getElementById("output-id2").innerHTML = request.responseText;
+			alert("Still not saving anything in the DB (will do soon)");
 		}
 	});
 	}
