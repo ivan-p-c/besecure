@@ -1,8 +1,10 @@
 //=======GLOBAL VARIABLES=======
 		   
-		   var geo_layer;
+		   var geo_layer,polygonLayer;
+		   var htmlSelect;
 		   var map;
 		   var drawControls;
+		   var selectItem;
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
 		   
@@ -26,7 +28,7 @@
 			    osmLayer  = new OpenLayers.Layer.OSM();
 				
 				//LAYER THAT WILL CONTAIN THE POLYGON(S) DRAWN BY THE USER
-				var polygonLayer = new OpenLayers.Layer.Vector("Custom Areas");
+				polygonLayer = new OpenLayers.Layer.Vector("Custom Areas");
 				
 				//create a style object
 				var style = new OpenLayers.Style();
@@ -115,7 +117,7 @@
 
 				
 				//Select feature(s) in the selected area (e.g. ward) --> FOR TESTING PURPOSES
-				var selectItem = new OpenLayers.Control.SelectFeature(
+				selectItem = new OpenLayers.Control.SelectFeature(
 					geo_layer, 
 					{toggle: true, clickout:true}
 				);
@@ -152,7 +154,7 @@
 						}
 						//document.getElementById("output-id").innerHTML = output;
 						//====================================================
-						 var htmlSelect=document.getElementById('selectAttribute');
+						htmlSelect=document.getElementById('selectAttribute');
 						
 						removeOptions(htmlSelect);
 						
@@ -170,9 +172,9 @@
 				
 				//Adding layers
 				//map.addLayer(asb2012_layer);
-				map.addLayer(geo_layer);
 				map.addLayer(polygonLayer);
-				
+				map.addLayer(geo_layer);
+			
 				map.addControl(navigate);
 				//Adding a Layer Switch controller
 				map.addControl(new OpenLayers.Control.LayerSwitcher());
@@ -189,8 +191,13 @@
                     var control = drawControls[key];
                     if(element.value == key && element.checked) {
                         control.activate();
+						polygonLayer.setVisibility(true);
+						removeOptions(htmlSelect);
+						selectItem.unselectAll();
+						document.getElementById("output-id").innerHTML = "";
                     } else {
                         control.deactivate();
+						polygonLayer.setVisibility(false);
                     }
                 }
             }
