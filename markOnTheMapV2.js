@@ -2,8 +2,13 @@
 		   
 		   var geo_layer;
 		   var map;
+		   var drawControls;
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
+		   
+		   var options={
+				clickable:true
+			};
 		   
 //=======INITIALIZING FUNCTION=======
 
@@ -11,12 +16,17 @@
 			    //local variables with SRS projections: mercator for base map and WGS84 for additional layers
 			    var geographic = new OpenLayers.Projection("EPSG:4326");
 			    var mercator = new OpenLayers.Projection("EPSG:900913");
+				
+
 			   
 			    //map object constructor
 			    map = new OpenLayers.Map('map', {projection: mercator});
 			    
 				//adding the base layer (OSM: Open Service Maps) to the map
 			    osmLayer  = new OpenLayers.Layer.OSM();
+				
+				//LAYER THAT WILL CONTAIN THE POLYGON(S) DRAWN BY THE USER
+				var polygonLayer = new OpenLayers.Layer.Vector("Custom Areas");
 				
 				//create a style object
 				var style = new OpenLayers.Style();
@@ -86,7 +96,7 @@
 					(
 					"ASB",
 					"http://localhost:8080/geoserver/wms",
-					{layers: 'cite:asb_belfast2012', transparent:true, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
+					{layers: 'cite:psni_data', transparent:true, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
 					); 
 
 				
@@ -161,9 +171,38 @@
 				//Adding layers
 				//map.addLayer(asb2012_layer);
 				map.addLayer(geo_layer);
-				map.addLayer(wms_layer);
-			
+				map.addLayer(polygonLayer);
+				
+				map.addControl(navigate);
+				//Adding a Layer Switch controller
+				map.addControl(new OpenLayers.Control.LayerSwitcher());
+				
+				drawControls = {polygon: new OpenLayers.Control.DrawFeature(polygonLayer,
+                        OpenLayers.Handler.Polygon)};
+				for(var key in drawControls) {
+                    map.addControl(drawControls[key]);
+                }
 	}
+	
+	function toggleControl(element) {
+                for(key in drawControls) {
+                    var control = drawControls[key];
+                    if(element.value == key && element.checked) {
+                        control.activate();
+                    } else {
+                        control.deactivate();
+                    }
+                }
+            }
+
+	function allowPan(element) {
+		var stop = !element.checked;
+		for(var key in drawControls) {
+			drawControls[key].handler.stopDown = stop;
+			drawControls[key].handler.stopUp = stop;
+			}
+		}
+	
 	
 	function saveSelection(){
 		var request = OpenLayers.Request.GET({
