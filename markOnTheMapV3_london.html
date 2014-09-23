@@ -1,0 +1,43 @@
+<!-- Local testing URL for this file: http://localhost:8080/geoserver/www/besecure/markOnTheMapV3_london.html
+Place in <geoserver data_dir>/www
+-->
+<html>
+
+    <head>
+		<style type="text/css">
+        #map { 
+            width: 60%; 
+            height: 75%; 
+            border: solid 2px #808080; 
+			}
+    </style>
+        <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+
+        <script type="text/javascript" src="markOnTheMapV3_london.js">
+        </script>
+    </head>
+
+<body onload="init()">
+        <h2>Mark on The Map V3.0</h2>
+        <div id="map"></div>  
+		<div id="output-id"></div>
+		<table> 
+		<tr>
+          <td align   = "right">&nbsp;</td>
+        <td align   = "left">Attributes: <select name="selectAttribute" id="selectAttribute"></select>
+		</td>
+		<tr>
+          <td align   = "right">&nbsp;</td>
+          <td align   = "left"><input name="saveSelection"
+              type    = "button"
+              id      = "saveSelection"
+              value   = "call SaveSelection"
+              onclick = "javaScript:saveSelection();"/>
+          </td>
+        </tr>
+      </table>
+	  <div id="output-id2"></div>
+      <input type="checkBox" name="type" value="polygon" id="polygonToggle" onclick="toggleControl(this);">
+      <label for="polygonToggle"><b>Select Custom Area</b></label>
+    </body>
+</html>
