@@ -87,18 +87,9 @@ Place in <geoserver data_dir>/www
           <td align   = "right">&nbsp;</td>
         <td align   = "left">Attributes: <select name="selectAttribute" id="selectAttribute"></select>
 		</td>
-		<tr>
-          <td align   = "right">&nbsp;</td>
-          <td align   = "left"><input name="saveSelection"
-              type    = "button"
-              id      = "saveSelection"
-              value   = "call SaveSelection"
-              onclick = "javaScript:saveSelection();"/>
-          </td>
-        </tr>
       </table>
 	  <div id="output-id2"></div>
-      <input type="checkBox" name="type" value="polygon" id="polygonToggle" onclick="toggleControl(this);">
-      <label for="polygonToggle"><b>Select Custom Area</b></label>
+	  <br />
+	  <select name="selectTables" id="selectTables"></select>
     </body>
 </html>

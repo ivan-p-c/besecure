@@ -1,6 +1,6 @@
 //=======GLOBAL VARIABLES=======
 		   
-		   var geo_layer,polygonLayer;
+		   var geo_layer,polygonLayer,circleLayer;
 		   var htmlSelect;
 		   var map;
 		   var drawControls;
@@ -102,6 +102,64 @@
 					})
 				});
 				
+				
+				
+				
+/* 				// ####################  Create the Circle/Radius layer
+				var radiusLayer = new OpenLayers.Layer.Vector("Radius Layer", {visibility: false });
+				
+				// Extend the default style so that we can dynamically calculate
+				// the circle radius
+				var style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style.default);
+ 
+				// By using a function for the radius style, the
+				// radius will update during zoom level changes
+				OpenLayers.Util.extend( style, { pointRadius: '${calculateRadius}' } );
+ 
+				// Our function to recalculate the radius after zoom change
+				var styleArea = new OpenLayers.Style(
+					style,
+					{
+					context: {
+						calculateRadius: function(feature) {
+						return feature.attributes.radius / feature.layer.map.getResolution();
+						}
+					}
+				}
+				);
+				
+								// Create a new OpenLayers StyleMap
+				var sm = new OpenLayers.StyleMap({
+					'default': styleArea
+				});
+				
+				// Create the circle layer, and add our custom StyleMap
+				var circleLayer = new OpenLayers.Layer.Vector('Circle Layer', { styleMap: sm });
+				//################################ */
+				
+				
+				
+				var circleLayer = new OpenLayers.Layer.Vector("Circles", {
+					visibility: false,
+					strategies: [
+					new OpenLayers.Strategy.BBOX(), 
+					saveStrategy
+					],
+					protocol: new OpenLayers.Protocol.WFS({
+						url: "http://localhost:8080/geoserver/wfs",
+						featurePrefix:"cite",
+						featureType: "circular_areas",
+						featureNS: "http://www.opengeospatial.net/cite",
+						srsName: "EPSG:4326",
+						geometryName: "geom",
+						version: "1.1.0"
+					})
+				});
+				
+				map.addLayer(circleLayer);
+			
+				
+				
 				//create a style object
 				var style = new OpenLayers.Style();
 				var select_style = new OpenLayers.Style();
@@ -146,6 +204,70 @@
 				
 				//Adding base OSM layer to the map
 				map.addLayer(osmLayer);
+
+				
+				
+				
+				
+				
+/* 				//######################
+					radiusLayer.events.register('featureadded', map, featureAdded);
+					 
+					function featureAdded( event ) {
+					 
+					  // Get the centre xy
+					  var widthOffset = (event.feature.geometry.bounds.right - event.feature.geometry.bounds.left) / 2;
+					  var centreX = event.feature.geometry.bounds.left + widthOffset;
+					 
+					  var heightOffset = (event.feature.geometry.bounds.top - event.feature.geometry.bounds.bottom) / 2;
+					  var centreY = event.feature.geometry.bounds.bottom + heightOffset;
+					 
+					  // Create the point geometry
+					  var pointGeometry = new OpenLayers.Geometry.Point(centreX, centreY);
+					 
+					  // Get the width of the bounding box in pixels
+					  var pixelLeft = map.getPixelFromLonLat(
+						new OpenLayers.LonLat(
+						  event.feature.geometry.bounds.left,
+						  event.feature.geometry.bounds.top
+						)
+					  );
+					 
+					  var pixelRight = map.getPixelFromLonLat(
+						new OpenLayers.LonLat(
+						  event.feature.geometry.bounds.right,
+						  event.feature.geometry.bounds.top
+						)
+					  );
+					 
+					  // Divide width in two, as we need the radius, not diameter
+					  var width = (pixelRight.x - pixelLeft.x) / 2;
+					 
+					  // Create the point (circle) feature and add it to the circle layer.
+					  // The radius needs to be in meters, so we multiple it by the
+					  // map resolution to provide the correct value
+					  var pointFeature = new OpenLayers.Feature.Vector(pointGeometry, {radius: width * map.getResolution()});
+					 
+					  circleLayer.addFeatures([pointFeature]);
+					 
+					  // Clean up the vector draw path layer
+					  radiusLayer.removeFeatures( vectorLayer.features, {silent: true} );
+					}
+					 
+					var drawOptions = {
+						handlerOptions: {
+							freehand: true
+						}
+					};
+					 
+					var drawControl = new OpenLayers.Control.DrawFeature( radiusLayer, OpenLayers.Handler.Path, drawOptions );
+					map.addControl( drawControl );
+					drawControl.activate();
+				//###################### */
+				
+				
+				
+				
 				
 				
 				//WFS LAYER definition
@@ -181,7 +303,8 @@
 					dragPanOptions: {
 						enableKinetic: true,
 						documentDrag: true
-					}
+					},
+					displayClass: "olControlNavigation"
 				});
 				map.addControl(navigate);
 				//Adding a Layer Switch controller
@@ -238,12 +361,18 @@
 								htmlSelect.add(selectBoxOption, null); 
 							}
 						}
+						
+						//Enable selector of data tables associated to the area selected
+						htmlSelectTables = document.getElementById('selectTables');
+						removeOptions(htmlSelectTables);
+						
+						showDataTables(htmlSelectTables);
 					}
 				});
 				
 				
 				//Adding layers
-				//map.addLayer(asb2012_layer);
+				map.addLayer(asb2012_layer);
 				map.addLayer(polygonLayer);
 				map.addLayer(geo_layer);
 			
@@ -251,11 +380,6 @@
 				//Adding a Layer Switch controller
 				map.addControl(new OpenLayers.Control.LayerSwitcher());
 				
-/* 				drawControls = {polygon: new OpenLayers.Control.DrawFeature(polygonLayer,
-                        OpenLayers.Handler.Polygon)};
-				for(var key in drawControls) {
-                    map.addControl(drawControls[key]);
-                } */
 				
 				// add the custom editing toolbar
 				var panel = new OpenLayers.Control.Panel(
@@ -274,6 +398,12 @@
 						multi: true
 					}
 				);
+				
+				polyOptions = {sides: 40};
+				var circleControl = new OpenLayers.Control.DrawFeature(polygonLayer,
+                                            OpenLayers.Handler.RegularPolygon,
+                                            {title: "Draw Circle", handlerOptions: polyOptions});
+				//map.addControl(circleControl);
 				 
 				var edit = new OpenLayers.Control.ModifyFeature(polygonLayer, {
 					title: "Modify Feature",
@@ -294,10 +424,46 @@
 						displayClass: "olControlSaveFeatures"
 				});
 				 
-				panel.addControls([navigate, save, del, edit, draw]);
-				panel.defaultControl = draw;
+				panel.addControls([navigate, save, del, edit, draw, circleControl]);
+				panel.defaultControl = navigate;
 				map.addControl(panel);
 				
+				
+				//DISABLE DRAGGING
+				for (var i = 0; i< map.controls.length; i++) {
+					if (map.controls[i].displayClass == 
+											"olControlNavigation") {
+						map.controls[i].deactivate();
+					}
+				}
+				
+	}
+	
+	function showDataTables(htmlSelectTables){
+				//WMS LAYER definition
+				data_layer = new OpenLayers.Layer.Vector("Data", {
+					strategies: [new OpenLayers.Strategy.BBOX()],
+					projection: new OpenLayers.Projection("EPSG:4326"),
+					protocol: new OpenLayers.Protocol.WFS({          
+					version: "1.1.0",
+					url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:tables_list&propertyName=name_shown",            
+					featurePrefix: "cite",
+					featureType: "tables_list",
+					featureNS: "http://www.opengeospatial.net/cite",
+					outputFormat: "application/json",
+					//geometryName: "geom",
+					readFormat: new OpenLayers.Format.GeoJSON()
+					})
+				});
+					
+				for (var key in data_layer.features[1].attributes) {
+							if (data_layer.features[0].attributes.hasOwnProperty(key)) {
+								selectBoxOption = document.createElement("option");
+								selectBoxOption.value = key;
+								selectBoxOption.text = key; 
+								htmlSelectTables.add(selectBoxOption, null); 
+							}
+				}
 	}
 	
 	function toggleControl(element) {
@@ -323,23 +489,6 @@
 			drawControls[key].handler.stopUp = stop;
 			}
 		}
-	
-	
-	function saveSelection(){
-		var request = OpenLayers.Request.GET({
-		url: "http://localhost:8080/geoserver/rest/workspaces/cite/featuretypes.xml",
-		callback: function(request) {
-			// Code here to handle the response, the request object contains the data
-			
-			//Save selection in a database table, including a timestamp
-			
-			//IMPORTANT: Initial testing code deleted: ASK ITTI (Tomasz and Marek) how to save selection and what method to use (Java? JQuery?) since plain Javascript is highly insecure
-			//...
-			//document.getElementById("output-id2").innerHTML = request.responseText;
-			alert("Still not saving anything in the DB (will do soon)");
-		}
-	});
-	}
 	
 	
 	function removeOptions(selectbox)
