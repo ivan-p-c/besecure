@@ -2,6 +2,7 @@
 		   
 		   var geo_layer,polygonLayer,circleLayer;
 		   var htmlSelect;
+		   var selectedCircleFeature;
 		   var map;
 		   var drawControls;
 		   var selectItem;
@@ -86,7 +87,7 @@
 				saveStrategy.events.register("failure", '', showFailureMsg);
 				
 				polygonLayer = new OpenLayers.Layer.Vector("Custom Areas", {
-					visibility: false,
+					visibility: true,
 					strategies: [
 					new OpenLayers.Strategy.BBOX(), 
 					saveStrategy
@@ -137,26 +138,6 @@
 				var circleLayer = new OpenLayers.Layer.Vector('Circle Layer', { styleMap: sm });
 				//################################ */
 				
-				
-				
-				var circleLayer = new OpenLayers.Layer.Vector("Circles", {
-					visibility: false,
-					strategies: [
-					new OpenLayers.Strategy.BBOX(), 
-					saveStrategy
-					],
-					protocol: new OpenLayers.Protocol.WFS({
-						url: "http://localhost:8080/geoserver/wfs",
-						featurePrefix:"cite",
-						featureType: "circular_areas",
-						featureNS: "http://www.opengeospatial.net/cite",
-						srsName: "EPSG:4326",
-						geometryName: "geom",
-						version: "1.1.0"
-					})
-				});
-				
-				map.addLayer(circleLayer);
 			
 				
 				
@@ -371,10 +352,42 @@
 				});
 				
 				
+				
+				//Select feature(s) in the custom area (e.g. polygon or circle)
+				selectCustom = new OpenLayers.Control.SelectFeature(
+					polygonLayer, 
+					{toggle: true, clickout:true}
+				);
+				selectCustom.handlers['feature'].stopDown = false;
+				selectCustom.handlers['feature'].stopUp = false;
+				map.addControl(selectCustom);
+				selectCustom.activate();
+				
+				polygonLayer.events.fallThrough = true;
+				polygonLayer.setZIndex(1);
+				
+				polygonLayer.events.on(
+				{
+					featureselected: function(event)
+					{
+						selectedCircleFeature = event.feature;
+						
+						document.getElementById("output-id").innerHTML = 
+						"<b>Resize circular area:</b><input type=\"button\" value='+'"+
+						"onClick=\"resizeCirclePlus();\" />" +
+						"<input type=\"button\" value='-'"+
+						"onClick=\"resizeCircleMinus();\" />";
+						
+					}
+				});
+				
+				
+				
+				
 				//Adding layers
 				map.addLayer(asb2012_layer);
-				map.addLayer(polygonLayer);
 				map.addLayer(geo_layer);
+				map.addLayer(polygonLayer);
 			
 				map.addControl(navigate);
 				//Adding a Layer Switch controller
@@ -438,6 +451,22 @@
 				}
 				
 	}
+	
+	
+	
+		
+	function resizeCirclePlus() {
+            centroid = selectedCircleFeature.geometry.getCentroid();
+			selectedCircleFeature.geometry.resize(1.2,centroid);
+			polygonLayer.redraw();
+        }
+	
+	function resizeCircleMinus() {
+            centroid = selectedCircleFeature.geometry.getCentroid();
+			selectedCircleFeature.geometry.resize(1.0 / 1.2,centroid);
+			polygonLayer.redraw();
+        }
+		
 	
 	function showDataTables(htmlSelectTables){
 				//WMS LAYER definition
