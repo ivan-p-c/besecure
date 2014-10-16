@@ -6,6 +6,7 @@
 		   var map;
 		   var drawControls;
 		   var selectItem;
+		   var area_name;
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
 		   
@@ -308,16 +309,43 @@
 				geo_layer.events.on(
 					{
 						featureselected: function(event)
-						{
+						{ 
+						//Enable selector of data categories associated to the area selected (excluding geometries)
+						htmlSelectCateg = document.getElementById('selectCateg');
+						htmlSelectCateg.disabled = false;
+						removeOptions(htmlSelectCateg);	
+
+						htmlSelectYear = document.getElementById('selectYear');
+						htmlSelectYear.disabled = true;
+						removeOptions(htmlSelectYear);
+						htmlSelectAttr = document.getElementById('selectAttrib');
+						htmlSelectAttr.disabled = true;
+						removeOptions(htmlSelectAttr);
+						htmlSelectTables = document.getElementById('selectTables');
+						htmlSelectTables.disabled = true;
+						removeOptions(htmlSelectTables);
+						
+						jQuery.post("http://localhost:80/get_data_categories.php", {}, function(data) {
+								//data_categories.innerHTML = data_categories.innerHTML + data;
+								jsonData = JSON.parse(data);
+								for (var i = 0; i < jsonData.length; i++) {
+									name = jsonData[i].name;
+									selectBoxOption = document.createElement("option");
+									selectBoxOption.value = name;
+									selectBoxOption.text = name; 
+									htmlSelectCateg.add(selectBoxOption, null); 
+								}
+								htmlSelectCateg.selectedIndex = -1;
+						});
+								
 						var feature = event.feature;
 						var id = feature.geometry.id;
 						var area = feature.geometry.getGeodesicArea()/1000000;
-						var name = feature.attributes.name;
-						var id = feature.attributes.ward93_id;
-						/*var abs = feature.attributes.asb2006;
-						var bur = feature.attributes.burglar_10;
-						var vehicle = feature.attributes.vehicle_10;*/
-						var output = "Ward: " + name + " (id: "+id+")</br>Area: " + area.toFixed(2) + " m2";
+						area_name = feature.attributes.name;
+						var ward_id = feature.attributes.ward93_id;
+
+						//var output = "Ward: " + name + " (id: "+id+")</br>Area: " + area.toFixed(2) + " m2";
+						var output = "Ward: " + area_name;
 						document.getElementById("output-id").innerHTML = output;
 
 						//====================================================
@@ -332,7 +360,7 @@
 						//====================================================
 						htmlSelect=document.getElementById('selectAttribute');
 						
-						removeOptions(htmlSelect);
+/* 						removeOptions(htmlSelect);
 						
 						for (var key in geo_layer.features[1].attributes) {
 							if (geo_layer.features[0].attributes.hasOwnProperty(key)) {
@@ -341,13 +369,10 @@
 								selectBoxOption.text = key; 
 								htmlSelect.add(selectBoxOption, null); 
 							}
-						}
+						} */
 						
-						//Enable selector of data tables associated to the area selected
-						htmlSelectTables = document.getElementById('selectTables');
-						removeOptions(htmlSelectTables);
 						
-						showDataTables(htmlSelectTables);
+						//showDataTables(htmlSelectTables);
 					}
 				});
 				
@@ -386,8 +411,8 @@
 				
 				//Adding layers
 				map.addLayer(asb2012_layer);
-				map.addLayer(geo_layer);
 				map.addLayer(polygonLayer);
+				map.addLayer(geo_layer);
 			
 				map.addControl(navigate);
 				//Adding a Layer Switch controller
@@ -400,7 +425,7 @@
 				);
 				 
 				var navigate = new OpenLayers.Control.Navigation({
-					title: "Pan Map"
+					title: "Pan Map / Select Custom Areas"
 				});
 				 
 				var draw = new OpenLayers.Control.DrawFeature(
@@ -454,7 +479,150 @@
 	
 	
 	
+	function activateTablesList(){
+		htmlSelectCateg = document.getElementById('selectCateg');
+		category_selected = htmlSelectCateg.options[htmlSelectCateg.selectedIndex].text;
+
+		htmlSelectYear = document.getElementById('selectYear');
+		htmlSelectYear.disabled = true;
+		removeOptions(htmlSelectYear);
+		htmlSelectAttr = document.getElementById('selectAttrib');
+		htmlSelectAttr.disabled = true;
+		removeOptions(htmlSelectAttr);
 		
+		//Enable selector of data tables associated to the category selected (excluding geometries)
+		htmlSelectTables = document.getElementById('selectTables');
+		htmlSelectTables.disabled = false;
+		removeOptions(htmlSelectTables);						
+		jQuery.post("http://localhost:80/get_data_tables.php", {category: category_selected}, function(data) {
+				jsonData = JSON.parse(data);
+				for (var i = 0; i < jsonData.length; i++) {
+					cname = jsonData[i].name_shown;
+					value = jsonData[i].tablename;
+					selectBoxOption = document.createElement("option");
+					selectBoxOption.value = value;
+					selectBoxOption.text = cname; 
+					htmlSelectTables.add(selectBoxOption, null); 
+				}
+				htmlSelectTables.selectedIndex = -1;
+		});
+	}
+	
+	
+	function activateYearSelector(){
+		htmlSelectAttr = document.getElementById('selectAttrib');
+		htmlSelectAttr.disabled = true;
+		removeOptions(htmlSelectAttr);
+	
+		htmlSelectTables = document.getElementById('selectTables');
+		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
+		table_selected = String(table_selected);
+		
+		jQuery.post("http://localhost:80/get_all_attrib_data.php", {table: table_selected, area: area_name}, function(data) {
+				jsonData = JSON.parse(data);
+				table_content = "<table border=\"1\"><thead><tr><td><b>Descriptor name</b></td>" + 
+				"<td><b>Descriptor value</b></td></tr></thead><tbody>";
+				$.each(jsonData, function(k, v) {
+					if($.inArray(k,["ward","ward_code","lgd","lgd_code"]) == -1){
+					//display the key and value pair
+					table_content = table_content.concat("<tr><td><b>"+ k.replace(/_/g," ") + "</b></td><td>"+ v +"</td></tr>");
+					}
+				});
+				table_content = table_content.concat("</tbody></table>");
+				htmlResult = document.getElementById("data_shown");
+				htmlResult.innerHTML = table_content;
+		});
+		
+		jQuery.post("http://localhost:80/check_table_years.php", {table: table_selected}, function(data) {
+				jsonData = JSON.parse(data);
+				is_per_year = jsonData.per_year;
+				//Operations for a table with data for multiple years
+				if(is_per_year == "t"){
+					htmlSelectYear = document.getElementById('selectYear');
+					htmlSelectYear.disabled = false;
+					removeOptions(htmlSelectYear);
+					jQuery.post("http://localhost:80/get_table_years.php", {table: table_selected}, function(yeardata) {
+						jsonYearData = JSON.parse(yeardata);
+						yearArray = new Array();
+						for (var i = 0; i < jsonYearData.length; i++) {
+							cname = jsonYearData[i].column_name;
+							if(cname[0]=='_'){
+								cname = cname.substring(1,5);
+								if($.inArray(cname, yearArray) == -1){
+									yearArray.push(cname);
+								}
+							}
+						}
+						for (var j = 0; j < yearArray.length; j++) {
+							selectBoxOption = document.createElement("option");
+							selectBoxOption.value = yearArray[j];
+							selectBoxOption.text = yearArray[j];
+							htmlSelectYear.add(selectBoxOption, null);
+						};
+						htmlSelectYear.selectedIndex = -1;
+					});
+				//Operations for a table with data not separated by years
+				} else{
+					htmlSelectYear = document.getElementById('selectYear');
+					htmlSelectYear.disabled = true;
+					removeOptions(htmlSelectYear);
+					selectBoxOption = document.createElement("option");
+					selectBoxOption.value = "N/A";
+					selectBoxOption.text = "N/A";
+					htmlSelectYear.add(selectBoxOption, null);
+					activateAttributesList();
+				}
+		});
+	}
+	
+	function activateAttributesList(){
+		htmlSelectYear = document.getElementById('selectYear');
+		year_selected = htmlSelectYear.options[htmlSelectYear.selectedIndex].text;
+		htmlSelectTables = document.getElementById('selectTables');
+		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
+		table_selected = String(table_selected);
+		htmlSelectAttr = document.getElementById('selectAttrib');
+		htmlSelectAttr.disabled = false;
+		removeOptions(htmlSelectAttr);
+		jQuery.post("http://localhost:80/get_table_attributes.php", {year: year_selected, table: table_selected}, function(data) {
+			jsonData = JSON.parse(data);
+			for (var i = 0; i < jsonData.length; i++) {
+				cname = jsonData[i].column_name;
+				value = jsonData[i].column_name;
+				if($.inArray(cname,["ward","ward_code","lgd","lgd_code"]) == -1){
+					cname = cname.replace(/_/g," ");
+					selectBoxOption = document.createElement("option");
+					selectBoxOption.value = value;
+					selectBoxOption.text = cname; 
+					htmlSelectAttr.add(selectBoxOption, null);
+				}
+			}
+			htmlSelectAttr.selectedIndex = -1;
+		});
+	}
+	
+	
+	function showDataForAttribute(){
+		htmlSelectTables = document.getElementById('selectTables');
+		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
+		table_selected = String(table_selected);
+		htmlSelectAttr = document.getElementById('selectAttrib');
+		attr_selected = htmlSelectAttr.options[htmlSelectAttr.selectedIndex].value;
+		attr_selected = String(attr_selected);
+		
+		jQuery.post("http://localhost:80/get_simple_data.php",
+		{attr: attr_selected, table: table_selected, area: area_name}, function(data) {
+			htmlResult = document.getElementById("data_shown");
+			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Descriptor name</b></td>" + 
+			"<td><b>Descriptor value</b></td></tr></thead>" +
+			"<tbody>" +
+			"<tr><td><b>"+ htmlSelectAttr.options[htmlSelectAttr.selectedIndex].text +
+			"</b></td><td>"+ data +"</td></tr></tbody>" +
+			"</table>";
+		});
+	}
+
+	
 	function resizeCirclePlus() {
             centroid = selectedCircleFeature.geometry.getCentroid();
 			selectedCircleFeature.geometry.resize(1.2,centroid);
@@ -528,4 +696,9 @@
 			selectbox.remove(i);
 		}
 	}
-            
+	
+	
+	function getData(value){
+		$.post("evidenceDescriptorsV1.php",{myData:value},function(data) {
+		$("#results").html(data);
+    });}        
