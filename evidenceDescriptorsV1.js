@@ -7,6 +7,7 @@
 		   var drawControls;
 		   var selectItem;
 		   var area_name;
+		   var tooltip;
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
 		   
@@ -60,7 +61,7 @@
 			    //map object constructor
 			    //map = new OpenLayers.Map('map', {projection: mercator});
 			    
-				var map = new OpenLayers.Map ("map", {   
+				map = new OpenLayers.Map ("map", {   
 					controls:[
 						//allows the user pan ability
 						new OpenLayers.Control.Navigation(),
@@ -360,6 +361,8 @@
 						//====================================================
 						htmlSelect=document.getElementById('selectAttribute');
 						
+						
+						
 /* 						removeOptions(htmlSelect);
 						
 						for (var key in geo_layer.features[1].attributes) {
@@ -620,6 +623,8 @@
 			"</b></td><td>"+ data +"</td></tr></tbody>" +
 			"</table>";
 		});
+		
+		choropleth();	
 	}
 
 	
@@ -697,8 +702,162 @@
 		}
 	}
 	
+	/**
+	* Creation of a new layer with a choropleth map that shows descriptor data
+	*/
+	function choropleth(){
+		choroplethStyles = createStyles();
+		//tooltip = new MapTooltip("BESECURE");
+		
+		// Configure default styles.
+		OpenLayers.Feature.Vector.style['default']['fillColor'] = "#cccccc";
+		OpenLayers.Feature.Vector.style['default']['fillOpacity'] = 0.9;
+		OpenLayers.Feature.Vector.style['default']['strokeColor'] = "#000000";
+		OpenLayers.Feature.Vector.style['default']['strokeOpacity'] = 0.1;
+		OpenLayers.Feature.Vector.style['default']['stroke'] = true;
+		
+/* 		mapShapes = new OpenLayers.Layer.GML("Interactive Shapes", datafile, {
+			format:OpenLayers.Format.GeoJSON, 
+			styleMap:choroplethStyles, 
+			isBaseLayer:false, 
+			projection:new OpenLayers.Projection("EPSG:4326"),
+			renderers:["SVG", "VML", "Canvas"]
+		}); */
+		choro_layer = new OpenLayers.Layer.Vector("Choropleth Map", {
+			strategies: [new OpenLayers.Strategy.BBOX()],
+			styleMap: choroplethStyles,
+			isBaseLayer:false,
+			projection: new OpenLayers.Projection("EPSG:4326"),
+			protocol: new OpenLayers.Protocol.WFS({          
+			version: "1.1.0",
+			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=ward93_id",            
+			featurePrefix: "cite",
+			featureType: "view_ni",
+			featureNS: "http://www.opengeospatial.net/cite",
+			outputFormat: "application/json",
+			readFormat: new OpenLayers.Format.GeoJSON(),
+			geometryName: "geom"
+			})
+		});
+		map.addLayer(choro_layer);
+		//attachTooltip(map, choro_layer);
+	}
 	
-	function getData(value){
-		$.post("evidenceDescriptorsV1.php",{myData:value},function(data) {
-		$("#results").html(data);
-    });}        
+	/**
+	* Attaches the tooltip to a given map layer.
+	*/
+	function attachTooltip(map, layer) {
+		var selector = new OpenLayers.Control.SelectFeature(layer, {
+			hover:true,
+			multiple:false,
+			onSelect:function(feature) {
+				tooltip.show('<h4>'+ feature.attributes.name + "</h4> "+ feature.attributes.value);
+			},
+			onUnselect:function(feature) {
+				tooltip.hide();
+			}
+		});
+		map.addControl(selector);
+		
+		// override highlight methods to prevent color change.
+		selector.highlight = function(feature){};
+		selector.unhighlight = function(feature){};
+		selector.handlers.feature.stopDown = false;
+		selector.activate();
+	}
+	
+	
+	/**
+	* Creates a choropleth stylemap to define the map shading colors.
+	*/
+	function createStyles() {
+		var theme = new OpenLayers.Style();
+		
+		range5 = new OpenLayers.Rule({
+				filter:new OpenLayers.Filter.Comparison({
+				type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
+				property:"ward93_id",
+				value:200
+			}),
+			symbolizer:{Polygon:{fillColor:'#003060'}}
+		});
+		
+		range4 = new OpenLayers.Rule({
+			filter: new OpenLayers.Filter.Logical({
+				type: OpenLayers.Filter.Logical.AND,
+				filters:[ 
+					new OpenLayers.Filter.Comparison({
+					  type:OpenLayers.Filter.Comparison.LESS_THAN,
+					  property:"ward93_id",
+					  value:200
+					}),
+					new OpenLayers.Filter.Comparison({
+					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
+					  property:"ward93_id",
+					  value:100
+					})
+				]
+			}),
+			symbolizer: {Polygon:{fillColor:'#00719f'}}
+		});
+		
+		range3 = new OpenLayers.Rule({
+			filter: new OpenLayers.Filter.Logical({
+				type: OpenLayers.Filter.Logical.AND,
+				filters:[ 
+					new OpenLayers.Filter.Comparison({
+					  type:OpenLayers.Filter.Comparison.LESS_THAN,
+					  property:"ward93_id",
+					  value:100
+					}),
+					new OpenLayers.Filter.Comparison({
+					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
+					  property:"ward93_id",
+					  value:50
+					})
+				]
+			}),
+			symbolizer: {Polygon:{fillColor:'#00a9df'}}
+		});
+		
+		range2 = new OpenLayers.Rule({
+			filter: new OpenLayers.Filter.Logical({
+				type: OpenLayers.Filter.Logical.AND,
+				filters:[ 
+					new OpenLayers.Filter.Comparison({
+					  type:OpenLayers.Filter.Comparison.LESS_THAN,
+					  property:"ward93_id",
+					  value:50
+					}),
+					new OpenLayers.Filter.Comparison({
+					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
+					  property:"ward93_id",
+					  value:10
+					})
+				]
+			}),
+			symbolizer: {Polygon:{fillColor:'#68c2e7'}}
+		});
+		
+		range1 = new OpenLayers.Rule({
+			filter: new OpenLayers.Filter.Comparison({
+				type:OpenLayers.Filter.Comparison.LESS_THAN,
+				property:"ward93_id",
+				value:10
+			}),
+			symbolizer:{Polygon:{fillColor:'#aed0da'}}
+		});
+		
+		range0 = new OpenLayers.Rule({
+			filter: new OpenLayers.Filter.Comparison({
+				type:OpenLayers.Filter.Comparison.EQUAL_TO,
+				property:"ward93_id",
+				value:"No Data"
+			}),
+			symbolizer:{Polygon:{fillColor:'#cccccc'}}
+		});
+		
+		theme.addRules([range1, range2, range3, range4, range5, range0]);
+
+		return new OpenLayers.StyleMap({'default':theme});
+	}        
