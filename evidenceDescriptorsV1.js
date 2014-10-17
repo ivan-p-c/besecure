@@ -741,43 +741,6 @@
 		});
 		map.addLayer(choro_layer);
 		//attachTooltip(map, choro_layer);
-		var highlightControl = new OpenLayers.Control.SelectFeature(choro_layer, {
-			hover: true,
-			highlightOnly: true,
-			renderIntent: "temporary"
-		});
-		map.addControl(highlightControl);
-		highlightControl.activate();
-				
-		highlightControl.events.on({
-			featurehighlighted: function(evt) {
-
-				var lonlat = new OpenLayers.LonLat(
-					evt.feature.geometry.x,
-					evt.feature.geometry.y
-				);
-
-				var html = 'Name: ' +
-						   evt.feature.attributes.name + '<br />' +
-						   'Score: ' + 
-						   evt.feature.attributes.score;
-
-				var popup = new OpenLayers.Popup.Anchored(
-					'myPopup',
-					lonlat,
-					new OpenLayers.Size(150, 60),
-					html, 
-					{size: {w: 14, h: 14}, offset: {x: -7, y: -7}},
-					false
-				);
-
-				evt.feature.popup = popup;
-				map.addPopup(popup);
-			},
-			featureunhighlighted: function(evt) {
-				map.removePopup(evt.feature.popup);
-			}
-		});
 	}
 	
 	/**
