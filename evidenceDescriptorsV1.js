@@ -707,7 +707,6 @@
 	*/
 	function choropleth(){
 		choroplethStyles = createStyles();
-		//tooltip = new MapTooltip("BESECURE");
 		
 		// Configure default styles.
 		OpenLayers.Feature.Vector.style['default']['fillColor'] = "#cccccc";
@@ -716,13 +715,6 @@
 		OpenLayers.Feature.Vector.style['default']['strokeOpacity'] = 0.1;
 		OpenLayers.Feature.Vector.style['default']['stroke'] = true;
 		
-/* 		mapShapes = new OpenLayers.Layer.GML("Interactive Shapes", datafile, {
-			format:OpenLayers.Format.GeoJSON, 
-			styleMap:choroplethStyles, 
-			isBaseLayer:false, 
-			projection:new OpenLayers.Projection("EPSG:4326"),
-			renderers:["SVG", "VML", "Canvas"]
-		}); */
 		choro_layer = new OpenLayers.Layer.Vector("Choropleth Map", {
 			strategies: [new OpenLayers.Strategy.BBOX()],
 			styleMap: choroplethStyles,
@@ -739,31 +731,37 @@
 			geometryName: "geom"
 			})
 		});
-		map.addLayer(choro_layer);
-		//attachTooltip(map, choro_layer);
-	}
-	
-	/**
-	* Attaches the tooltip to a given map layer.
-	*/
-	function attachTooltip(map, layer) {
-		var selector = new OpenLayers.Control.SelectFeature(layer, {
-			hover:true,
-			multiple:false,
-			onSelect:function(feature) {
-				tooltip.show('<h4>'+ feature.attributes.name + "</h4> "+ feature.attributes.value);
+		
+		var hoverControl = new OpenLayers.Control.SelectFeature(
+		  choro_layer, {
+			hover: true,
+			onBeforeSelect: function(feature) {
+			   // add code to create tooltip/popup
+			   popup = new OpenLayers.Popup.Anchored(
+				  "",
+				  feature.geometry.getBounds().getCenterLonLat(),
+				  new OpenLayers.Size(100,50),
+				  "<div><b>Ward ID</b>: "+feature.attributes.ward93_id+"</div>",
+				  null,
+				  true,
+				  null);
+			   feature.popup = popup;
+
+			   map.addPopup(popup);
+			   // return false to disable selection and redraw
+			   // or return true for default behaviour
+			   return true;
 			},
-			onUnselect:function(feature) {
-				tooltip.hide();
+			onUnselect: function(feature) {
+			   // remove tooltip
+			   map.removePopup(feature.popup);
+			   feature.popup.destroy();
+			   feature.popup=null;
 			}
 		});
-		map.addControl(selector);
-		
-		// override highlight methods to prevent color change.
-		selector.highlight = function(feature){};
-		selector.unhighlight = function(feature){};
-		selector.handlers.feature.stopDown = false;
-		selector.activate();
+		map.addControl(hoverControl);
+		hoverControl.activate();
+		map.addLayer(choro_layer);
 	}
 	
 	
@@ -777,7 +775,7 @@
 				filter:new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 				property:"ward93_id",
-				value:200
+				value:750
 			}),
 			symbolizer:{Polygon:{fillColor:'#003060'}}
 		});
@@ -789,12 +787,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"ward93_id",
-					  value:200
+					  value:750
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"ward93_id",
-					  value:100
+					  value:735
 					})
 				]
 			}),
@@ -808,12 +806,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"ward93_id",
-					  value:100
+					  value:735
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"ward93_id",
-					  value:50
+					  value:720
 					})
 				]
 			}),
@@ -827,12 +825,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"ward93_id",
-					  value:50
+					  value:720
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"ward93_id",
-					  value:10
+					  value:700
 					})
 				]
 			}),
@@ -843,7 +841,7 @@
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.LESS_THAN,
 				property:"ward93_id",
-				value:10
+				value:700
 			}),
 			symbolizer:{Polygon:{fillColor:'#aed0da'}}
 		});
