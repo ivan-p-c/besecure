@@ -164,6 +164,10 @@ Place in <geoserver data_dir>/www
         <div id="map"></div>  
 		<div id="output-id"></div>
 	  <div id="resize-id"></div>
+	  <div id="opacity-id">
+	  <b>Change active layer opacity: <input type="text" size="3" disabled="true" id="opacity" value="100" /> %</b>
+	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" />
+	  </div>
 	  <br />
 	  <b>Step 1. Select data category to show:</b> <select name="selectCateg" id="selectCateg" onChange="javascript:activateTablesList();" disabled="true"></select>
 	  <br />

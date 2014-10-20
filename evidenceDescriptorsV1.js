@@ -11,7 +11,9 @@
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
 		   
-
+			//Layer opacity thresholds
+			var maxOpacity = 0.9;
+			var minOpacity = 0.1;
 			
 			//set up the modification tools
 			var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
@@ -858,4 +860,20 @@
 		theme.addRules([range1, range2, range3, range4, range5, range0]);
 
 		return new OpenLayers.StyleMap({'default':theme});
-	}        
+	}
+
+		/**
+		* Modify Layer opacity
+		*/
+		function changeOpacity(byOpacity) {
+			var visible_layers = map.getLayersBy("visibility", true);
+			var activeLayer = null;
+			for (var i=0, len=visible_layers.length; i<len;i++) {
+			   if (visible_layers[i].isBaseLayer === false) {
+				   activeLayer = visible_layers[i];
+			   }
+			}
+		
+            activeLayer.setOpacity(byOpacity/100);
+			document.getElementById("opacity").value=byOpacity;
+        }
