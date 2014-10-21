@@ -730,7 +730,7 @@
 			projection: new OpenLayers.Projection("EPSG:4326"),
 			protocol: new OpenLayers.Protocol.WFS({          
 			version: "1.1.0",
-			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=ward93_id",            
+			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=income_domain_rank",            
 			featurePrefix: "cite",
 			featureType: "view_ni",
 			featureNS: "http://www.opengeospatial.net/cite",
@@ -749,7 +749,7 @@
 				  "",
 				  feature.geometry.getBounds().getCenterLonLat(),
 				  new OpenLayers.Size(100,50),
-				  "<div><b>Ward ID</b>: "+feature.attributes.ward93_id+"</div>",
+				  "<div><b>Ward ID</b>: "+feature.attributes.income_domain_rank+"</div>",
 				  null,
 				  true,
 				  null);
@@ -782,7 +782,7 @@
 		range5 = new OpenLayers.Rule({
 				filter:new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-				property:"ward93_id",
+				property:"income_domain_rank",
 				value:750
 			}),
 			symbolizer:{Polygon:{fillColor:'#003060'}}
@@ -794,12 +794,12 @@
 				filters:[ 
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
-					  property:"ward93_id",
+					  property:"income_domain_rank",
 					  value:750
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-					  property:"ward93_id",
+					  property:"income_domain_rank",
 					  value:735
 					})
 				]
@@ -813,12 +813,12 @@
 				filters:[ 
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
-					  property:"ward93_id",
+					  property:"income_domain_rank",
 					  value:735
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-					  property:"ward93_id",
+					  property:"income_domain_rank",
 					  value:720
 					})
 				]
@@ -832,12 +832,12 @@
 				filters:[ 
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
-					  property:"ward93_id",
+					  property:"income_domain_rank",
 					  value:720
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-					  property:"ward93_id",
+					  property:"income_domain_rank",
 					  value:700
 					})
 				]
@@ -848,7 +848,7 @@
 		range1 = new OpenLayers.Rule({
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.LESS_THAN,
-				property:"ward93_id",
+				property:"income_domain_rank",
 				value:700
 			}),
 			symbolizer:{Polygon:{fillColor:'#aed0da'}}
@@ -857,7 +857,7 @@
 		range0 = new OpenLayers.Rule({
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.EQUAL_TO,
-				property:"ward93_id",
+				property:"income_domain_rank",
 				value:"No Data"
 			}),
 			symbolizer:{Polygon:{fillColor:'#cccccc'}}
