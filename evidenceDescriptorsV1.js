@@ -708,6 +708,12 @@
 	* Creation of a new layer with a choropleth map that shows descriptor data
 	*/
 	function choropleth(){
+	
+		if(typeof choro_layer != 'undefined'){
+			map.removeLayer(choro_layer);		
+			choro_layer.destroy();
+		}
+		
 		choroplethStyles = createStyles();
 		
 		// Configure default styles.
@@ -717,7 +723,7 @@
 		OpenLayers.Feature.Vector.style['default']['strokeOpacity'] = 0.1;
 		OpenLayers.Feature.Vector.style['default']['stroke'] = true;
 		
-		choro_layer = new OpenLayers.Layer.Vector("Choropleth Map", {
+		choro_layer = new OpenLayers.Layer.Vector("Colored Map", {
 			strategies: [new OpenLayers.Strategy.BBOX()],
 			styleMap: choroplethStyles,
 			isBaseLayer:false,
