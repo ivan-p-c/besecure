@@ -1,5 +1,7 @@
 //=======GLOBAL VARIABLES=======
 		   
+		   var server_url = "http://localhost:80/";
+		   
 		   var geo_layer,polygonLayer,circleLayer;
 		   var htmlSelect;
 		   var selectedCircleFeature;
@@ -499,7 +501,7 @@
 		htmlSelectTables = document.getElementById('selectTables');
 		htmlSelectTables.disabled = false;
 		removeOptions(htmlSelectTables);						
-		jQuery.post("http://localhost:80/get_data_tables.php", {category: category_selected}, function(data) {
+		jQuery.post(server_url + "get_data_tables.php", {category: category_selected}, function(data) {
 				jsonData = JSON.parse(data);
 				for (var i = 0; i < jsonData.length; i++) {
 					cname = jsonData[i].name_shown;
@@ -523,7 +525,7 @@
 		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
 		table_selected = String(table_selected);
 		
-		jQuery.post("http://localhost:80/get_all_attrib_data.php", {table: table_selected, area: area_name}, function(data) {
+		jQuery.post(server_url + "get_all_attrib_data.php", {table: table_selected, area: area_name}, function(data) {
 				jsonData = JSON.parse(data);
 				table_content = "<table border=\"1\"><thead><tr><td><b>Descriptor name</b></td>" + 
 				"<td><b>Descriptor value</b></td></tr></thead><tbody>";
@@ -538,7 +540,7 @@
 				htmlResult.innerHTML = table_content;
 		});
 		
-		jQuery.post("http://localhost:80/check_table_years.php", {table: table_selected}, function(data) {
+		jQuery.post(server_url + "check_table_years.php", {table: table_selected}, function(data) {
 				jsonData = JSON.parse(data);
 				is_per_year = jsonData.per_year;
 				//Operations for a table with data for multiple years
@@ -546,7 +548,7 @@
 					htmlSelectYear = document.getElementById('selectYear');
 					htmlSelectYear.disabled = false;
 					removeOptions(htmlSelectYear);
-					jQuery.post("http://localhost:80/get_table_years.php", {table: table_selected}, function(yeardata) {
+					jQuery.post(server_url + "get_table_years.php", {table: table_selected}, function(yeardata) {
 						jsonYearData = JSON.parse(yeardata);
 						yearArray = new Array();
 						for (var i = 0; i < jsonYearData.length; i++) {
@@ -589,7 +591,7 @@
 		htmlSelectAttr = document.getElementById('selectAttrib');
 		htmlSelectAttr.disabled = false;
 		removeOptions(htmlSelectAttr);
-		jQuery.post("http://localhost:80/get_table_attributes.php", {year: year_selected, table: table_selected}, function(data) {
+		jQuery.post(server_url + "get_table_attributes.php", {year: year_selected, table: table_selected}, function(data) {
 			jsonData = JSON.parse(data);
 			for (var i = 0; i < jsonData.length; i++) {
 				cname = jsonData[i].column_name;
@@ -615,7 +617,7 @@
 		attr_selected = htmlSelectAttr.options[htmlSelectAttr.selectedIndex].value;
 		attr_selected = String(attr_selected);
 		
-		jQuery.post("http://localhost:80/get_simple_data.php",
+		jQuery.post(server_url + "get_simple_data.php",
 		{attr: attr_selected, table: table_selected, area: area_name}, function(data) {
 			htmlResult = document.getElementById("data_shown");
 			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Descriptor name</b></td>" + 
@@ -626,7 +628,7 @@
 			"</table>";
 		});
 		
-		choropleth();	
+		choropleth(attr_selected);	
 	}
 
 	
@@ -642,33 +644,6 @@
 			polygonLayer.redraw();
         }
 		
-	
-	function showDataTables(htmlSelectTables){
-				//WMS LAYER definition
-				data_layer = new OpenLayers.Layer.Vector("Data", {
-					strategies: [new OpenLayers.Strategy.BBOX()],
-					projection: new OpenLayers.Projection("EPSG:4326"),
-					protocol: new OpenLayers.Protocol.WFS({          
-					version: "1.1.0",
-					url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:tables_list&propertyName=name_shown",            
-					featurePrefix: "cite",
-					featureType: "tables_list",
-					featureNS: "http://www.opengeospatial.net/cite",
-					outputFormat: "application/json",
-					//geometryName: "geom",
-					readFormat: new OpenLayers.Format.GeoJSON()
-					})
-				});
-					
-				for (var key in data_layer.features[1].attributes) {
-							if (data_layer.features[0].attributes.hasOwnProperty(key)) {
-								selectBoxOption = document.createElement("option");
-								selectBoxOption.value = key;
-								selectBoxOption.text = key; 
-								htmlSelectTables.add(selectBoxOption, null); 
-							}
-				}
-	}
 	
 	function toggleControl(element) {
                 for(key in drawControls) {
@@ -707,11 +682,10 @@
 	/**
 	* Creation of a new layer with a choropleth map that shows descriptor data
 	*/
-	function choropleth(){
-	
+	function choropleth(attribute){
 		if(typeof choro_layer != 'undefined'){
 			map.removeLayer(choro_layer);		
-			choro_layer.destroy();
+			//choro_layer.destroy();
 		}
 		
 		choroplethStyles = createStyles();
@@ -730,7 +704,8 @@
 			projection: new OpenLayers.Projection("EPSG:4326"),
 			protocol: new OpenLayers.Protocol.WFS({          
 			version: "1.1.0",
-			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=income_domain_rank",            
+			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=descriptor",
+			viewparams: "attr:" + attribute,            
 			featurePrefix: "cite",
 			featureType: "view_ni",
 			featureNS: "http://www.opengeospatial.net/cite",
@@ -749,7 +724,7 @@
 				  "",
 				  feature.geometry.getBounds().getCenterLonLat(),
 				  new OpenLayers.Size(100,50),
-				  "<div><b>Ward ID</b>: "+feature.attributes.income_domain_rank+"</div>",
+				  "<div><b>Descriptor value</b>: "+feature.attributes.descriptor+"</div>",
 				  null,
 				  true,
 				  null);
@@ -782,7 +757,7 @@
 		range5 = new OpenLayers.Rule({
 				filter:new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-				property:"income_domain_rank",
+				property:"descriptor",
 				value:750
 			}),
 			symbolizer:{Polygon:{fillColor:'#003060'}}
@@ -794,12 +769,12 @@
 				filters:[ 
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
-					  property:"income_domain_rank",
+					  property:"descriptor",
 					  value:750
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-					  property:"income_domain_rank",
+					  property:"descriptor",
 					  value:735
 					})
 				]
@@ -813,12 +788,12 @@
 				filters:[ 
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
-					  property:"income_domain_rank",
+					  property:"descriptor",
 					  value:735
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-					  property:"income_domain_rank",
+					  property:"descriptor",
 					  value:720
 					})
 				]
@@ -832,12 +807,12 @@
 				filters:[ 
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
-					  property:"income_domain_rank",
+					  property:"descriptor",
 					  value:720
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
-					  property:"income_domain_rank",
+					  property:"descriptor",
 					  value:700
 					})
 				]
@@ -848,7 +823,7 @@
 		range1 = new OpenLayers.Rule({
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.LESS_THAN,
-				property:"income_domain_rank",
+				property:"descriptor",
 				value:700
 			}),
 			symbolizer:{Polygon:{fillColor:'#aed0da'}}
@@ -857,7 +832,7 @@
 		range0 = new OpenLayers.Rule({
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.EQUAL_TO,
-				property:"income_domain_rank",
+				property:"descriptor",
 				value:"No Data"
 			}),
 			symbolizer:{Polygon:{fillColor:'#cccccc'}}
