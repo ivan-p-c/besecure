@@ -628,7 +628,7 @@
 			"</table>";
 		});
 		
-		choropleth(attr_selected);	
+		choropleth(attr_selected,table_selected);	
 	}
 
 	
@@ -682,7 +682,7 @@
 	/**
 	* Creation of a new layer with a choropleth map that shows descriptor data
 	*/
-	function choropleth(attribute){
+	function choropleth(attribute,table){
 		if(typeof choro_layer != 'undefined'){
 			map.removeLayer(choro_layer);		
 			//choro_layer.destroy();
@@ -705,7 +705,7 @@
 			protocol: new OpenLayers.Protocol.WFS({          
 			version: "1.1.0",
 			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=descriptor",
-			viewparams: "attr:" + attribute,            
+			viewparams: "attr:" + attribute + ";t:" + table,            
 			featurePrefix: "cite",
 			featureType: "view_ni",
 			featureNS: "http://www.opengeospatial.net/cite",
@@ -715,22 +715,28 @@
 			})
 		});
 		
+		popupClear();
+		
 		var hoverControl = new OpenLayers.Control.SelectFeature(
 		  choro_layer, {
 			hover: true,
 			onBeforeSelect: function(feature) {
-			   // add code to create tooltip/popup
-			   popup = new OpenLayers.Popup.Anchored(
-				  "",
-				  feature.geometry.getBounds().getCenterLonLat(),
-				  new OpenLayers.Size(100,50),
-				  "<div><b>Descriptor value</b>: "+feature.attributes.descriptor+"</div>",
-				  null,
-				  true,
-				  null);
-			   feature.popup = popup;
+ 					jQuery.post(server_url + "get_simple_data.php",
+					{attr: attr_selected, table: table_selected, area: feature.attributes.name}, function(data) {
+						console.log(data);
+						// add code to create tooltip/popup
+					   popup = new OpenLayers.Popup.Anchored(
+						  "",
+						  feature.geometry.getBounds().getCenterLonLat(),
+						  new OpenLayers.Size(120,80),
+						  "<div><b>" + feature.attributes.name +  "</b>: "+data+"</div>",
+						  null,
+						  true,
+						  null);
+					   feature.popup = popup;
 
-			   map.addPopup(popup);
+					   map.addPopup(popup);
+					}); 
 			   // return false to disable selection and redraw
 			   // or return true for default behaviour
 			   return true;
@@ -746,6 +752,14 @@
 		hoverControl.activate();
 		map.addLayer(choro_layer);
 	}
+	
+	
+	function popupClear() {
+    //alert('number of popups '+map.popups.length);
+    while( map.popups.length ) {
+         map.removePopup(map.popups[0]);
+    }
+}
 	
 	
 	/**
