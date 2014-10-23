@@ -1,0 +1,96 @@
+<!-- Local testing URL for this file: http://localhost:8080/geoserver/www/besecure/evidenceDescriptorsV1.html
+Place in <geoserver data_dir>/www
+-->
+<html>
+
+    <head>
+		<style type="text/css">
+        #map { 
+            width: 60%; 
+            height: 75%; 
+            border: solid 2px #808080; 
+			}
+				/* Custom editing toolbar */
+		.customEditingToolbar {
+		float: right;
+		right: 0px;
+		height: 30px;
+		width: 200px;
+		}
+		.customEditingToolbar div {
+		float: right;
+		margin: 5px;
+		width: 24px;
+		height: 24px;
+		}
+		.olControlNavigationItemActive {
+		background-image:
+		url("../openlayers/theme/default/img/editing_tool_bar.png");
+			background-repeat: no-repeat;
+		background-position: -103px -23px;
+		}
+		.olControlNavigationItemInactive {
+		background-image:
+		url("../openlayers/theme/default/img/editing_tool_bar.png");
+		background-repeat: no-repeat;
+		background-position: -103px -0px;
+		}
+		.olControlDrawFeaturePolygonItemInactive {
+		background-image:
+		url("../openlayers/theme/default/img/editing_tool_bar.png");
+		background-repeat: no-repeat;
+		background-position: -26px 0px;
+		}
+		.olControlDrawFeaturePolygonItemActive {
+		background-image:
+		url("../openlayers/theme/default/img/editing_tool_bar.png");
+		background-repeat: no-repeat;
+		background-position: -26px -23px;                                                            
+		}
+		.olControlModifyFeatureItemActive {
+		background-image:
+		url(../openlayers/theme/default/img/move_feature_on.png);
+		background-repeat: no-repeat;
+		background-position: 0px 1px;
+		}
+		.olControlModifyFeatureItemInactive {
+		background-image:
+		url(../openlayers/theme/default/img/move_feature_off.png);
+		background-repeat: no-repeat;
+		background-position: 0px 1px;
+		}
+		.olControlDeleteFeatureItemActive {
+		background-image:
+		url(../openlayers/theme/default/img/remove_point_on.png);
+		background-repeat: no-repeat;
+		background-position: 0px 1px;
+		}
+		.olControlDeleteFeatureItemInactive {
+		background-image:
+		url(../openlayers/theme/default/img/remove_point_off.png);
+		background-repeat: no-repeat;
+		background-position: 0px 1px;
+		}
+    </style>
+        <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+        <script type="text/javascript" src="evidenceDescriptorsV1.js">
+        </script>
+    </head>
+
+<body onload="init()">
+        <h2>Evidence for Descriptors Definition V1.0</h2>
+        <div id="map"></div>  
+		<div id="output-id"></div>
+		<table> 
+		<tr>
+          <td align   = "right">&nbsp;</td>
+        <td align   = "left">Attributes: <select name="selectAttribute" id="selectAttribute"></select>
+		</td>
+      </table>
+	  <br />
+	  <select name="selectTables" id="selectTables"></select>
+	  <div id="resize-id"></div>
+	  <input type="button" value="Botanic" onkeyup="getData(this.value)"/>
+    </body>
+</html>

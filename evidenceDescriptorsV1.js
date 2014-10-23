@@ -775,7 +775,7 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"descriptor",
-					  value:735
+					  value:500
 					})
 				]
 			}),
@@ -789,12 +789,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"descriptor",
-					  value:735
+					  value:500
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"descriptor",
-					  value:720
+					  value:200
 					})
 				]
 			}),
@@ -808,12 +808,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"descriptor",
-					  value:720
+					  value:200
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"descriptor",
-					  value:700
+					  value:50
 					})
 				]
 			}),
@@ -824,7 +824,7 @@
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.LESS_THAN,
 				property:"descriptor",
-				value:700
+				value:50
 			}),
 			symbolizer:{Polygon:{fillColor:'#aed0da'}}
 		});
