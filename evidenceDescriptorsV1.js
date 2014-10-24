@@ -492,7 +492,8 @@
 	}
 	
 	function activateTablesList(){
-	
+		htmlCheckChoro = document.getElementById('showChoropleth');
+		htmlCheckChoro.disabled = true;
 		has_table = false;
 		has_attrib = false;
 	
@@ -526,7 +527,8 @@
 	
 	
 	function activateYearSelector(){
-	
+		htmlCheckChoro = document.getElementById('showChoropleth');
+		htmlCheckChoro.disabled = true;
 		has_table = true;
 		has_attrib = false;
 	
@@ -602,7 +604,8 @@
 	}
 	
 	function activateAttributesList(){
-	
+		htmlCheckChoro = document.getElementById('showChoropleth');
+		htmlCheckChoro.disabled = true;
 		has_attrib = false;
 	
 		htmlSelectYear = document.getElementById('selectYear');
@@ -661,6 +664,9 @@
 			"</table>";
 		});
 		
+		htmlCheckChoro = document.getElementById('showChoropleth');
+		htmlCheckChoro.disabled = false;
+		htmlCheckChoro.checked = false;
 		//choropleth();		
 	}
 
