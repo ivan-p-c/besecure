@@ -2,7 +2,7 @@
 		   
 		   var server_url = "http://localhost:80/";
 		   
-		   var geo_layer,polygonLayer,circleLayer;
+		   var geo_layer,polygonLayer,circleLayer,choro_layer;
 		   var htmlSelect;
 		   var selectedCircleFeature;
 		   var map;
@@ -12,6 +12,9 @@
 		   var tooltip;
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
+		   var hoverControl;
+		   var attrib_selected,table_selected;
+		   var has_table,has_attrib = false;
 		   
 			//Layer opacity thresholds
 			var maxOpacity = 0.9;
@@ -315,71 +318,43 @@
 					{
 						featureselected: function(event)
 						{ 
-						//Enable selector of data categories associated to the area selected (excluding geometries)
-						htmlSelectCateg = document.getElementById('selectCateg');
-						htmlSelectCateg.disabled = false;
-						removeOptions(htmlSelectCateg);	
-
-						htmlSelectYear = document.getElementById('selectYear');
-						htmlSelectYear.disabled = true;
-						removeOptions(htmlSelectYear);
-						htmlSelectAttr = document.getElementById('selectAttrib');
-						htmlSelectAttr.disabled = true;
-						removeOptions(htmlSelectAttr);
-						htmlSelectTables = document.getElementById('selectTables');
-						htmlSelectTables.disabled = true;
-						removeOptions(htmlSelectTables);
-						
-						jQuery.post("http://localhost:80/get_data_categories.php", {}, function(data) {
-								//data_categories.innerHTML = data_categories.innerHTML + data;
-								jsonData = JSON.parse(data);
-								for (var i = 0; i < jsonData.length; i++) {
-									name = jsonData[i].name;
-									selectBoxOption = document.createElement("option");
-									selectBoxOption.value = name;
-									selectBoxOption.text = name; 
-									htmlSelectCateg.add(selectBoxOption, null); 
-								}
-								htmlSelectCateg.selectedIndex = -1;
-						});
-								
 						var feature = event.feature;
+						area_name = feature.attributes.name;		
+/* 						
 						var id = feature.geometry.id;
 						var area = feature.geometry.getGeodesicArea()/1000000;
-						area_name = feature.attributes.name;
-						var ward_id = feature.attributes.ward93_id;
+						
+						var ward_id = feature.attributes.ward93_id; */
 
-						//var output = "Ward: " + name + " (id: "+id+")</br>Area: " + area.toFixed(2) + " m2";
-						var output = "Ward: " + area_name;
-						document.getElementById("output-id").innerHTML = output;
 
 						//====================================================
-						var output;
+	/* 					var output;
 
 						for (var key in feature.attributes) {
 							if (feature.attributes.hasOwnProperty(key)) {
 							output =  output + key + " = " + Math.round(feature.attributes[key],2) + "</br>";
 							}
-						}
+						} */
 						//document.getElementById("output-id").innerHTML = output;
 						//====================================================
 						htmlSelect=document.getElementById('selectAttribute');
 						
-						
-						
-/* 						removeOptions(htmlSelect);
-						
-						for (var key in geo_layer.features[1].attributes) {
-							if (geo_layer.features[0].attributes.hasOwnProperty(key)) {
-								selectBoxOption = document.createElement("option");
-								selectBoxOption.value = key;
-								selectBoxOption.text = key; 
-								htmlSelect.add(selectBoxOption, null); 
+						htmlSelectAttr = document.getElementById('selectAttrib');
+						if(has_attrib){
+							showDataForAttribute();
+						}else{
+							if(has_table){
+								activateYearSelector();
+							}else{
+								htmlResult = document.getElementById("data_shown");
+								htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
+								"<td><b>Descriptor value</b></td></tr></thead>" +
+								"<tbody>" +
+								"<tr><td><b><u>"+ area_name +"</u></b></td><td>No descriptor/s selected"
+								"</td><td>-</td></tr></tbody>" +
+								"</table>";
 							}
-						} */
-						
-						
-						//showDataTables(htmlSelectTables);
+						}
 					}
 				});
 				
@@ -482,11 +457,45 @@
 					}
 				}
 				
+				
+				activateCategoriesList();
 	}
 	
-	
+	function activateCategoriesList(){
+		//Enable selector of data categories associated to the area selected (excluding geometries)
+			htmlSelectCateg = document.getElementById('selectCateg');
+			htmlSelectCateg.disabled = false;
+			removeOptions(htmlSelectCateg);	
+
+			htmlSelectYear = document.getElementById('selectYear');
+			htmlSelectYear.disabled = true;
+			removeOptions(htmlSelectYear);
+			htmlSelectAttr = document.getElementById('selectAttrib');
+			htmlSelectAttr.disabled = true;
+			removeOptions(htmlSelectAttr);
+			htmlSelectTables = document.getElementById('selectTables');
+			htmlSelectTables.disabled = true;
+			removeOptions(htmlSelectTables);
+			
+			jQuery.post("http://localhost:80/get_data_categories.php", {}, function(data) {
+					//data_categories.innerHTML = data_categories.innerHTML + data;
+					jsonData = JSON.parse(data);
+					for (var i = 0; i < jsonData.length; i++) {
+						name = jsonData[i].name;
+						selectBoxOption = document.createElement("option");
+						selectBoxOption.value = name;
+						selectBoxOption.text = name; 
+						htmlSelectCateg.add(selectBoxOption, null); 
+					}
+					htmlSelectCateg.selectedIndex = -1;
+			});
+	}
 	
 	function activateTablesList(){
+	
+		has_table = false;
+		has_attrib = false;
+	
 		htmlSelectCateg = document.getElementById('selectCateg');
 		category_selected = htmlSelectCateg.options[htmlSelectCateg.selectedIndex].text;
 
@@ -517,6 +526,10 @@
 	
 	
 	function activateYearSelector(){
+	
+		has_table = true;
+		has_attrib = false;
+	
 		htmlSelectAttr = document.getElementById('selectAttrib');
 		htmlSelectAttr.disabled = true;
 		removeOptions(htmlSelectAttr);
@@ -527,12 +540,18 @@
 		
 		jQuery.post(server_url + "get_all_attrib_data.php", {table: table_selected, area: area_name}, function(data) {
 				jsonData = JSON.parse(data);
-				table_content = "<table border=\"1\"><thead><tr><td><b>Descriptor name</b></td>" + 
+				table_content = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
 				"<td><b>Descriptor value</b></td></tr></thead><tbody>";
+				var x = 0;
 				$.each(jsonData, function(k, v) {
 					if($.inArray(k,["ward","ward_code","lgd","lgd_code"]) == -1){
 					//display the key and value pair
-					table_content = table_content.concat("<tr><td><b>"+ k.replace(/_/g," ") + "</b></td><td>"+ v +"</td></tr>");
+					if(x==0){
+						table_content = table_content.concat("<tr><td><b><u>"+ area_name +"</u></b></td><td><b>"+ k.replace(/_/g," ") + "</b></td><td>"+ v +"</td></tr>");
+						}else{
+						table_content = table_content.concat("<tr><td></td><td><b>"+ k.replace(/_/g," ") + "</b></td><td>"+ v +"</td></tr>");
+						}
+					x++;
 					}
 				});
 				table_content = table_content.concat("</tbody></table>");
@@ -583,6 +602,9 @@
 	}
 	
 	function activateAttributesList(){
+	
+		has_attrib = false;
+	
 		htmlSelectYear = document.getElementById('selectYear');
 		year_selected = htmlSelectYear.options[htmlSelectYear.selectedIndex].text;
 		htmlSelectTables = document.getElementById('selectTables');
@@ -610,25 +632,36 @@
 	
 	
 	function showDataForAttribute(){
+	
+		has_attrib = true;
+	
 		htmlSelectTables = document.getElementById('selectTables');
-		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
-		table_selected = String(table_selected);
 		htmlSelectAttr = document.getElementById('selectAttrib');
+		
+		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
+		table_selected = String(table_selected);	
 		attr_selected = htmlSelectAttr.options[htmlSelectAttr.selectedIndex].value;
 		attr_selected = String(attr_selected);
+		
+		var area_info;
+		if(typeof area_name == 'undefined') {
+		    area_info = "SELECT AN AREA";
+		} else {
+			area_info = area_name;
+		}
 		
 		jQuery.post(server_url + "get_simple_data.php",
 		{attr: attr_selected, table: table_selected, area: area_name}, function(data) {
 			htmlResult = document.getElementById("data_shown");
-			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Descriptor name</b></td>" + 
+			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
 			"<td><b>Descriptor value</b></td></tr></thead>" +
 			"<tbody>" +
-			"<tr><td><b>"+ htmlSelectAttr.options[htmlSelectAttr.selectedIndex].text +
+			"<tr><td><b><u>"+ area_info +"</u></b></td><td><b>"+ htmlSelectAttr.options[htmlSelectAttr.selectedIndex].text +
 			"</b></td><td>"+ data +"</td></tr></tbody>" +
 			"</table>";
 		});
 		
-		choropleth(attr_selected,table_selected);	
+		//choropleth();		
 	}
 
 	
@@ -682,10 +715,18 @@
 	/**
 	* Creation of a new layer with a choropleth map that shows descriptor data
 	*/
-	function choropleth(attribute,table){
-		if(typeof choro_layer != 'undefined'){
+	function choropleth(){
+/* 		if(typeof choro_layer != 'undefined'){
 			map.removeLayer(choro_layer);		
-			//choro_layer.destroy();
+			choro_layer.destroy();
+		} */
+		
+		if(choro_layer != null){
+			map.removeControl(hoverControl);
+			hoverControl.destroy();
+
+			map.removeLayer(choro_layer);
+			choro_layer.destroy();
 		}
 		
 		choroplethStyles = createStyles();
@@ -705,7 +746,7 @@
 			protocol: new OpenLayers.Protocol.WFS({          
 			version: "1.1.0",
 			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=descriptor",
-			viewparams: "attr:" + attribute + ";t:" + table,            
+			viewparams: "attr:" + attr_selected + ";t:" + table_selected,            
 			featurePrefix: "cite",
 			featureType: "view_ni",
 			featureNS: "http://www.opengeospatial.net/cite",
@@ -715,38 +756,29 @@
 			})
 		});
 		
-		popupClear();
+/* 		if(typeof hoverControl != 'undefined'){
+		alert("reset hover control");
+		map.removeControl(hoverControl);
+		} */
 		
-		var hoverControl = new OpenLayers.Control.SelectFeature(
+		hoverControl = new OpenLayers.Control.SelectFeature(
 		  choro_layer, {
-			hover: true,
-			onBeforeSelect: function(feature) {
+			hover: false,
+			onSelect: function(feature) {
  					jQuery.post(server_url + "get_simple_data.php",
 					{attr: attr_selected, table: table_selected, area: feature.attributes.name}, function(data) {
-						console.log(data);
-						// add code to create tooltip/popup
-					   popup = new OpenLayers.Popup.Anchored(
-						  "",
-						  feature.geometry.getBounds().getCenterLonLat(),
-						  new OpenLayers.Size(120,80),
-						  "<div><b>" + feature.attributes.name +  "</b>: "+data+"</div>",
-						  null,
-						  true,
-						  null);
-					   feature.popup = popup;
-
-					   map.addPopup(popup);
+						htmlResult = document.getElementById("data_shown");
+						htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
+						"<td><b>Descriptor value</b></td></tr></thead>" +
+						"<tbody>" +
+						"<tr><td><u><b>"+feature.attributes.name+"</b></u></td><td><b>"+ htmlSelectAttr.options[htmlSelectAttr.selectedIndex].text +
+						"</b></td><td>"+ data +"</td></tr></tbody>" +
+						"</table>";
 					}); 
 			   // return false to disable selection and redraw
 			   // or return true for default behaviour
 			   return true;
 			},
-			onUnselect: function(feature) {
-			   // remove tooltip
-			   map.removePopup(feature.popup);
-			   feature.popup.destroy();
-			   feature.popup=null;
-			}
 		});
 		map.addControl(hoverControl);
 		hoverControl.activate();
@@ -754,12 +786,12 @@
 	}
 	
 	
-	function popupClear() {
-    //alert('number of popups '+map.popups.length);
+/* 	function popupClear() {
+    alert('number of popups '+map.popups.length);
     while( map.popups.length ) {
          map.removePopup(map.popups[0]);
     }
-}
+} */
 	
 	
 	/**

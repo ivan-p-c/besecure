@@ -175,8 +175,9 @@ Place in <geoserver data_dir>/www
 	  <br />
 	  <b>Step 3. Select Year and Descriptor:</b> <select name="selectYear" id="selectYear" onChange="javascript:activateAttributesList();" disabled="true"></select>
       <select name="selectAttrib" id="selectAttrib" onChange="javascript:showDataForAttribute();" disabled="true"></select>
+	  <input type="checkbox" id="showChoropleth" disabled="true" checked="false" onClick="javascript:choropleth();" /> Display colored map based on descriptor values
 	  <br />
-	  <div id="data_shown"><table border="1"><thead><tr><td><b>Descriptor name</b></td> 
+	  <div id="data_shown"><table border="1"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td> 
 			<td><b>Descriptor value</b></td></tr></thead></table></div>
 	</body>
 </html>
