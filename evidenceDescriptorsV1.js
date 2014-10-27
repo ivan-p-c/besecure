@@ -722,25 +722,28 @@
 	* Creation of a new layer with a choropleth map that shows descriptor data
 	*/
 	function choropleth(){
-	
-		jQuery.post(server_url + "get_geojson_from_view.php",
-		{attr: attr_selected, table: table_selected}, function(data) {
-			var html_test = document.getElementById("test");
-			html_test.innerHTML = data;
-		});
-	
-/* 		if(typeof choro_layer != 'undefined'){
-			map.removeLayer(choro_layer);		
-			choro_layer.destroy();
-		} */
 		
 		if(choro_layer != null){
-			map.removeControl(hoverControl);
-			hoverControl.destroy();
-
 			map.removeLayer(choro_layer);
 			choro_layer.destroy();
 		}
+		
+		var html_check_choro = document.getElementById("showChoropleth");
+		if(html_check_choro.checked){
+			var html_loading = document.getElementById("loading");
+			html_loading.innerHTML = "<small><b>Loading colored map. Please wait... (this may take a few seconds)</b></small>";
+			html_check_choro.disabled = true;
+			jQuery.post(server_url + "get_geojson_from_view.php",
+			{attr: attr_selected, table: table_selected}, function(data) {
+				show_colored_map();
+				html_loading.innerHTML = "<small><b>Map ready</b></small>";
+				html_check_choro.disabled = false;				
+			});
+		}else alert("unchecked");
+		
+	}
+	
+	function show_colored_map(){
 		
 		choroplethStyles = createStyles();
 		
@@ -752,60 +755,18 @@
 		OpenLayers.Feature.Vector.style['default']['stroke'] = true;
 		
 		choro_layer = new OpenLayers.Layer.Vector("Colored Map", {
-			strategies: [new OpenLayers.Strategy.BBOX()],
-			styleMap: choroplethStyles,
-			isBaseLayer:false,
-			projection: new OpenLayers.Projection("EPSG:4326"),
-			protocol: new OpenLayers.Protocol.WFS({          
-			version: "1.1.0",
-			url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:view_ni&propertyName=descriptor",
-			viewparams: "attr:" + attr_selected + ";t:" + table_selected,            
-			featurePrefix: "cite",
-			featureType: "view_ni",
-			featureNS: "http://www.opengeospatial.net/cite",
-			outputFormat: "application/json",
-			readFormat: new OpenLayers.Format.GeoJSON(),
-			geometryName: "geom"
-			})
+		   projection: new OpenLayers.Projection("EPSG:4326"),
+		   strategies: [new OpenLayers.Strategy.Fixed()],
+		   protocol: new OpenLayers.Protocol.HTTP({
+			  url: "http://localhost:80/choropleth_results.geojson",
+			  format: new OpenLayers.Format.GeoJSON()
+		   }),
+		   styleMap: choroplethStyles
 		});
 		
-/* 		if(typeof hoverControl != 'undefined'){
-		alert("reset hover control");
-		map.removeControl(hoverControl);
-		} */
-		
-	/* 	hoverControl = new OpenLayers.Control.SelectFeature(
-		  choro_layer, {
-			hover: false,
-			onSelect: function(feature) {
- 					jQuery.post(server_url + "get_simple_data.php",
-					{attr: attr_selected, table: table_selected, area: feature.attributes.name}, function(data) {
-						htmlResult = document.getElementById("data_shown");
-						htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
-						"<td><b>Descriptor value</b></td></tr></thead>" +
-						"<tbody>" +
-						"<tr><td><u><b>"+feature.attributes.name+"</b></u></td><td><b>"+ htmlSelectAttr.options[htmlSelectAttr.selectedIndex].text +
-						"</b></td><td>"+ data +"</td></tr></tbody>" +
-						"</table>";
-					}); 
-			   // return false to disable selection and redraw
-			   // or return true for default behaviour
-			   return true;
-			},
-		});
-		map.addControl(hoverControl);
-		hoverControl.activate(); */
 		map.addLayer(choro_layer);
 		map.raiseLayer(geo_layer,100);
 	}
-	
-	
-/* 	function popupClear() {
-    alert('number of popups '+map.popups.length);
-    while( map.popups.length ) {
-         map.removePopup(map.popups[0]);
-    }
-} */
 	
 	
 	/**
