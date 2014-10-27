@@ -179,5 +179,6 @@ Place in <geoserver data_dir>/www
 	  <br />
 	  <div id="data_shown"><table border="1"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td> 
 			<td><b>Descriptor value</b></td></tr></thead></table></div>
+	  <div id="test"></div>
 	</body>
 </html>

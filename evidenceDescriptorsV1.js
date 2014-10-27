@@ -722,6 +722,13 @@
 	* Creation of a new layer with a choropleth map that shows descriptor data
 	*/
 	function choropleth(){
+	
+		jQuery.post(server_url + "get_geojson_from_view.php",
+		{attr: attr_selected, table: table_selected}, function(data) {
+			var html_test = document.getElementById("test");
+			html_test.innerHTML = data;
+		});
+	
 /* 		if(typeof choro_layer != 'undefined'){
 			map.removeLayer(choro_layer);		
 			choro_layer.destroy();
