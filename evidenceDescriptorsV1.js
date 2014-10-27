@@ -767,7 +767,7 @@
 		map.removeControl(hoverControl);
 		} */
 		
-		hoverControl = new OpenLayers.Control.SelectFeature(
+	/* 	hoverControl = new OpenLayers.Control.SelectFeature(
 		  choro_layer, {
 			hover: false,
 			onSelect: function(feature) {
@@ -787,8 +787,9 @@
 			},
 		});
 		map.addControl(hoverControl);
-		hoverControl.activate();
+		hoverControl.activate(); */
 		map.addLayer(choro_layer);
+		map.raiseLayer(geo_layer,100);
 	}
 	
 	
