@@ -7,7 +7,7 @@ Place in <geoserver data_dir>/www
 		<style type="text/css">
         #map { 
             width: 60%; 
-            height: 75%; 
+            height: 70%; 
             border: solid 2px #808080; 
 			}
 				/* Custom editing toolbar */
@@ -166,7 +166,7 @@ Place in <geoserver data_dir>/www
 	  <div id="resize-id"></div>
 	  <div id="opacity-id">
 	  <b>Change active layer opacity: <input type="text" size="3" disabled="true" id="opacity" value="100" /> %</b>
-	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" />
+	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"></span>
 	  </div>
 	  <br />
 	  <b>Step 1. Select data category to show:</b> <select name="selectCateg" id="selectCateg" onChange="javascript:activateTablesList();" disabled="true"></select>

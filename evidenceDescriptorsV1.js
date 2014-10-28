@@ -1,60 +1,51 @@
 //=======GLOBAL VARIABLES=======
 		   
+		   //PHP and geojson files are stored here
 		   var server_url = "http://localhost:80/";
-		   
-		   var geo_layer,polygonLayer,circleLayer,choro_layer;
-		   var htmlSelect;
-		   var selectedCircleFeature;
+		   //map
 		   var map;
-		   var drawControls;
+		   //Main layers
+		   var geo_layer,polygonLayer,choro_layer;
+		   var htmlSelect;
+
 		   var selectItem;
 		   var area_name;
-		   var tooltip;
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
-		   var hoverControl;
 		   var attrib_selected,table_selected;
 		   var has_table,has_attrib = false;
-		   
-			//Layer opacity thresholds
-			var maxOpacity = 0.9;
-			var minOpacity = 0.1;
+		   var drawControls;
 			
 			//set up the modification tools
+			var selectedCircleFeature;
 			var DeleteFeature = OpenLayers.Class(OpenLayers.Control, {
-			initialize: function(layer, options) {
-			OpenLayers.Control.prototype.initialize.apply(this, [options]);
-			this.layer = layer;
-			this.handler = new OpenLayers.Handler.Feature(
-			this, layer, {click: this.clickFeature}
-			);
-			},
-			clickFeature: function(feature) {
-			// if feature doesn't have a fid, destroy it
-			if(feature.fid == undefined) {
-			this.layer.destroyFeatures([feature]);
-			} else {
-			feature.state = OpenLayers.State.DELETE;
-			this.layer.events.triggerEvent("afterfeaturemodified",
-			{feature: feature});
-			feature.renderIntent = "select";
-			this.layer.drawFeature(feature);
-			}
-			},
-			setMap: function(map) {
-			this.handler.setMap(map);
-			OpenLayers.Control.prototype.setMap.apply(this, arguments);
-			},
-			CLASS_NAME: "OpenLayers.Control.DeleteFeature"
+				initialize: function(layer, options) {
+				OpenLayers.Control.prototype.initialize.apply(this, [options]);
+				this.layer = layer;
+				this.handler = new OpenLayers.Handler.Feature(
+				this, layer, {click: this.clickFeature}
+				);
+				},
+				clickFeature: function(feature) {
+				// if feature doesn't have a fid, destroy it
+				if(feature.fid == undefined) {
+				this.layer.destroyFeatures([feature]);
+				} else {
+				feature.state = OpenLayers.State.DELETE;
+				this.layer.events.triggerEvent("afterfeaturemodified",
+				{feature: feature});
+				feature.renderIntent = "select";
+				this.layer.drawFeature(feature);
+				}
+				},
+				setMap: function(map) {
+				this.handler.setMap(map);
+				OpenLayers.Control.prototype.setMap.apply(this, arguments);
+				},
+				CLASS_NAME: "OpenLayers.Control.DeleteFeature"
 			});
 		
-		function showSuccessMsg(){
-			showMsg("Transaction successfully completed");
-		};
- 
-		function showFailureMsg(){
-			showMsg("An error occured while operating the transaction");
-		};
+
 		
 //=======INITIALIZING FUNCTION=======
 
@@ -63,11 +54,7 @@
 			    var geographic = new OpenLayers.Projection("EPSG:4326");
 			    var mercator = new OpenLayers.Projection("EPSG:900913");
 				
-
-			   
-			    //map object constructor
-			    //map = new OpenLayers.Map('map', {projection: mercator});
-			    
+			    // === DEFINING MAP ===
 				map = new OpenLayers.Map ("map", {   
 					controls:[
 						//allows the user pan ability
@@ -85,16 +72,19 @@
 						displayProjection: geographic
 				} );
 				
+				
+					
+				// === DEFINING LAYERS === 
 				//adding the base layer (OSM: Open Service Maps) to the map
 			    osmLayer  = new OpenLayers.Layer.OSM();
-				
-				//LAYER THAT WILL CONTAIN THE POLYGON(S) DRAWN BY THE USER
-				//polygonLayer = new OpenLayers.Layer.Vector("Custom Areas");
+				//Adding base OSM layer to the map
+				map.addLayer(osmLayer);
 				
 				var saveStrategy = new OpenLayers.Strategy.Save({auto:true});
 				saveStrategy.events.register("success", '', showSuccessMsg);
 				saveStrategy.events.register("failure", '', showFailureMsg);
 				
+				//Layer to create and deal with custom areas (polygons and circles)
 				polygonLayer = new OpenLayers.Layer.Vector("Custom Areas", {
 					visibility: true,
 					strategies: [
@@ -111,49 +101,39 @@
 						version: "1.1.0"
 					})
 				});
-				
-				
-				
-				
-/* 				// ####################  Create the Circle/Radius layer
-				var radiusLayer = new OpenLayers.Layer.Vector("Radius Layer", {visibility: false });
-				
-				// Extend the default style so that we can dynamically calculate
-				// the circle radius
-				var style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style.default);
- 
-				// By using a function for the radius style, the
-				// radius will update during zoom level changes
-				OpenLayers.Util.extend( style, { pointRadius: '${calculateRadius}' } );
- 
-				// Our function to recalculate the radius after zoom change
-				var styleArea = new OpenLayers.Style(
-					style,
-					{
-					context: {
-						calculateRadius: function(feature) {
-						return feature.attributes.radius / feature.layer.map.getResolution();
-						}
-					}
-				}
+				//Select feature(s) in the custom area (e.g. polygon or circle)
+				selectCustom = new OpenLayers.Control.SelectFeature(
+					polygonLayer, 
+					{toggle: true, clickout:true}
 				);
+				selectCustom.handlers['feature'].stopDown = false;
+				selectCustom.handlers['feature'].stopUp = false;
+				map.addControl(selectCustom);
+				selectCustom.activate();
 				
-								// Create a new OpenLayers StyleMap
-				var sm = new OpenLayers.StyleMap({
-					'default': styleArea
+				polygonLayer.events.fallThrough = true;
+				polygonLayer.setZIndex(1);
+				//Events that occur when a custom area is selected
+				polygonLayer.events.on(
+				{
+					featureselected: function(event)
+					{
+						selectedCircleFeature = event.feature;
+						
+						document.getElementById("resize_custom").innerHTML = 
+						"<b>  Resize circular area: </b><input type=\"button\" value='+'"+
+						"onClick=\"resizeCustomPlus();\" />" +
+						"<input type=\"button\" value='-'"+
+						"onClick=\"resizeCustomMinus();\" />";
+						
+					}
 				});
-				
-				// Create the circle layer, and add our custom StyleMap
-				var circleLayer = new OpenLayers.Layer.Vector('Circle Layer', { styleMap: sm });
-				//################################ */
-				
-			
 				
 				
 				//create a style object
 				var style = new OpenLayers.Style();
 				var select_style = new OpenLayers.Style();
-				//rule used for all polygons
+				//rule used for all areas displayed in geo_layer, related to case study areas (e.g. wards, LGDs)
 				var rule_fsa = new OpenLayers.Rule({
 					symbolizer: {
 					fillColor: "#5a5aff",
@@ -169,11 +149,6 @@
 					fontSize: 14}
 				});
 				var rule_highlight = new OpenLayers.Rule({
-					/*filter: new OpenLayers.Filter.Comparison({
-					type: OpenLayers.Filter.Comparison.EQUAL_TO,
-					property: "name",
-					value: "BOTANIC",
-				}),*/
 				symbolizer: {
 					fillColor: "#FF7144",
 					fillOpacity: 0.6,
@@ -191,74 +166,9 @@
 				style.addRules([rule_fsa]);
 				select_style.addRules([rule_highlight]);
 				var styles = new OpenLayers.StyleMap({'default': style,'select': select_style});
-				
-				//Adding base OSM layer to the map
-				map.addLayer(osmLayer);
+								
 
-				
-				
-				
-				
-				
-/* 				//######################
-					radiusLayer.events.register('featureadded', map, featureAdded);
-					 
-					function featureAdded( event ) {
-					 
-					  // Get the centre xy
-					  var widthOffset = (event.feature.geometry.bounds.right - event.feature.geometry.bounds.left) / 2;
-					  var centreX = event.feature.geometry.bounds.left + widthOffset;
-					 
-					  var heightOffset = (event.feature.geometry.bounds.top - event.feature.geometry.bounds.bottom) / 2;
-					  var centreY = event.feature.geometry.bounds.bottom + heightOffset;
-					 
-					  // Create the point geometry
-					  var pointGeometry = new OpenLayers.Geometry.Point(centreX, centreY);
-					 
-					  // Get the width of the bounding box in pixels
-					  var pixelLeft = map.getPixelFromLonLat(
-						new OpenLayers.LonLat(
-						  event.feature.geometry.bounds.left,
-						  event.feature.geometry.bounds.top
-						)
-					  );
-					 
-					  var pixelRight = map.getPixelFromLonLat(
-						new OpenLayers.LonLat(
-						  event.feature.geometry.bounds.right,
-						  event.feature.geometry.bounds.top
-						)
-					  );
-					 
-					  // Divide width in two, as we need the radius, not diameter
-					  var width = (pixelRight.x - pixelLeft.x) / 2;
-					 
-					  // Create the point (circle) feature and add it to the circle layer.
-					  // The radius needs to be in meters, so we multiple it by the
-					  // map resolution to provide the correct value
-					  var pointFeature = new OpenLayers.Feature.Vector(pointGeometry, {radius: width * map.getResolution()});
-					 
-					  circleLayer.addFeatures([pointFeature]);
-					 
-					  // Clean up the vector draw path layer
-					  radiusLayer.removeFeatures( vectorLayer.features, {silent: true} );
-					}
-					 
-					var drawOptions = {
-						handlerOptions: {
-							freehand: true
-						}
-					};
-					 
-					var drawControl = new OpenLayers.Control.DrawFeature( radiusLayer, OpenLayers.Handler.Path, drawOptions );
-					map.addControl( drawControl );
-					drawControl.activate();
-				//###################### */
-				
-				
-				
-				
-				
+								
 				
 				//WFS LAYER definition
 				geo_layer = new OpenLayers.Layer.Vector("Wards", {
@@ -277,31 +187,9 @@
 					})
 				});
 				
-				//Geometrical points sample layer, with ASB data from Belfast in 2012 (ONLY FOR TESTING PURPOSES)
-				asb2012_layer = new OpenLayers.Layer.WMS
-					(
-					"ASB",
-					"http://localhost:8080/geoserver/wms",
-					{layers: 'cite:psni_data', transparent:true, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
-					); 
 
-				
-				//Positioning and zooming map
-                map.setCenter(new OpenLayers.LonLat(-5.92, 54.59).transform(geographic,mercator), defaultZoom);
-				//Adding navigating controller
-				var navigate = new OpenLayers.Control.Navigation({
-					dragPanOptions: {
-						enableKinetic: true,
-						documentDrag: true
-					},
-					displayClass: "olControlNavigation"
-				});
-				map.addControl(navigate);
-				//Adding a Layer Switch controller
-				map.addControl(new OpenLayers.Control.LayerSwitcher());
 
-				
-				//Select feature(s) in the selected area (e.g. ward) --> FOR TESTING PURPOSES
+				//Select feature(s) in the selected area (e.g. ward)
 				selectItem = new OpenLayers.Control.SelectFeature(
 					geo_layer, 
 					{toggle: true, clickout:true}
@@ -320,26 +208,8 @@
 						{ 
 						var feature = event.feature;
 						area_name = feature.attributes.name;		
-/* 						
-						var id = feature.geometry.id;
-						var area = feature.geometry.getGeodesicArea()/1000000;
-						
-						var ward_id = feature.attributes.ward93_id; */
-
-
-						//====================================================
-	/* 					var output;
-
-						for (var key in feature.attributes) {
-							if (feature.attributes.hasOwnProperty(key)) {
-							output =  output + key + " = " + Math.round(feature.attributes[key],2) + "</br>";
-							}
-						} */
-						//document.getElementById("output-id").innerHTML = output;
-						//====================================================
-						htmlSelect=document.getElementById('selectAttribute');
-						
-						htmlSelectAttr = document.getElementById('selectAttrib');
+					/* 	var id = feature.geometry.id;
+						var area = feature.geometry.getGeodesicArea()/1000000; */
 						if(has_attrib){
 							showDataForAttribute();
 						}else{
@@ -359,48 +229,31 @@
 				});
 				
 				
+				//Geometrical points sample layer, with ASB data from Belfast in 2012 (ONLY FOR TESTING PURPOSES)
+				asb2012_layer = new OpenLayers.Layer.WMS
+					(
+					"ASB",
+					"http://localhost:8080/geoserver/wms",
+					{layers: 'cite:psni_data', transparent:false, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
+					); 
 				
-				//Select feature(s) in the custom area (e.g. polygon or circle)
-				selectCustom = new OpenLayers.Control.SelectFeature(
-					polygonLayer, 
-					{toggle: true, clickout:true}
-				);
-				selectCustom.handlers['feature'].stopDown = false;
-				selectCustom.handlers['feature'].stopUp = false;
-				map.addControl(selectCustom);
-				selectCustom.activate();
-				
-				polygonLayer.events.fallThrough = true;
-				polygonLayer.setZIndex(1);
-				
-				polygonLayer.events.on(
-				{
-					featureselected: function(event)
-					{
-						selectedCircleFeature = event.feature;
-						
-						document.getElementById("output-id").innerHTML = 
-						"<b>Resize circular area:</b><input type=\"button\" value='+'"+
-						"onClick=\"resizeCirclePlus();\" />" +
-						"<input type=\"button\" value='-'"+
-						"onClick=\"resizeCircleMinus();\" />";
-						
-					}
-				});
-				
-				
-				
-				
-				//Adding layers
+					
+				//=== Adding layers ===
 				map.addLayer(asb2012_layer);
 				map.addLayer(polygonLayer);
 				map.addLayer(geo_layer);
 			
-				map.addControl(navigate);
-				//Adding a Layer Switch controller
-				map.addControl(new OpenLayers.Control.LayerSwitcher());
-				
-				
+				//=== Positioning and zooming map ===
+                map.setCenter(new OpenLayers.LonLat(-5.92, 54.59).transform(geographic,mercator), defaultZoom);
+				//Adding navigating controller
+				var navigate = new OpenLayers.Control.Navigation({
+					dragPanOptions: {
+						enableKinetic: true,
+						documentDrag: true
+					},
+					displayClass: "olControlNavigation"
+				});
+					
 				// add the custom editing toolbar
 				var panel = new OpenLayers.Control.Panel(
 					{'displayClass': 'olControlEditingToolbar'}
@@ -423,7 +276,6 @@
 				var circleControl = new OpenLayers.Control.DrawFeature(polygonLayer,
                                             OpenLayers.Handler.RegularPolygon,
                                             {title: "Draw Circle", handlerOptions: polyOptions});
-				//map.addControl(circleControl);
 				 
 				var edit = new OpenLayers.Control.ModifyFeature(polygonLayer, {
 					title: "Modify Feature",
@@ -457,10 +309,17 @@
 					}
 				}
 				
-				
+				//FINALLY, ENABLE THE FIRST SELECTOR FOR DATA DESCRIPTORS: THE DATA CATEGORY SELECTOR
 				activateCategoriesList();
 	}
+	// ======= END OF INITIALIZING FUNCTION =========
 	
+	
+	
+	/**
+	Function to query on the different existing data categories in the database, and show
+	them in a select list.
+	*/
 	function activateCategoriesList(){
 		//Enable selector of data categories associated to the area selected (excluding geometries)
 			htmlSelectCateg = document.getElementById('selectCateg');
@@ -477,8 +336,7 @@
 			htmlSelectTables.disabled = true;
 			removeOptions(htmlSelectTables);
 			
-			jQuery.post("http://localhost:80/get_data_categories.php", {}, function(data) {
-					//data_categories.innerHTML = data_categories.innerHTML + data;
+			jQuery.post(server_url + "get_data_categories.php", {}, function(data) {
 					jsonData = JSON.parse(data);
 					for (var i = 0; i < jsonData.length; i++) {
 						name = jsonData[i].name;
@@ -491,6 +349,10 @@
 			});
 	}
 	
+	/**
+	Function to query on the different existing tables under a selected
+	data category. Such tables are displayed in a second select list.
+	*/
 	function activateTablesList(){
 		htmlCheckChoro = document.getElementById('showChoropleth');
 		htmlCheckChoro.disabled = true;
@@ -525,7 +387,11 @@
 		});
 	}
 	
-	
+	/**
+	Function to query whether the data in a selected table is separated for multiple years or not. If yes, then
+	the year selector is activated by querying on the possible range of years. Otherwise, the year selector
+	is disabled and the table attributes are directly queried.
+	*/
 	function activateYearSelector(){
 		htmlCheckChoro = document.getElementById('showChoropleth');
 		htmlCheckChoro.disabled = true;
@@ -539,7 +405,7 @@
 		htmlSelectTables = document.getElementById('selectTables');
 		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
 		table_selected = String(table_selected);
-		
+		//Show all descriptors' data in the table selected
 		jQuery.post(server_url + "get_all_attrib_data.php", {table: table_selected, area: area_name}, function(data) {
 				jsonData = JSON.parse(data);
 				table_content = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
@@ -560,7 +426,7 @@
 				htmlResult = document.getElementById("data_shown");
 				htmlResult.innerHTML = table_content;
 		});
-		
+		//Check if the table selected has data for a range of years
 		jQuery.post(server_url + "check_table_years.php", {table: table_selected}, function(data) {
 				jsonData = JSON.parse(data);
 				is_per_year = jsonData.per_year;
@@ -589,7 +455,7 @@
 						};
 						htmlSelectYear.selectedIndex = -1;
 					});
-				//Operations for a table with data not separated by years
+				//Operations for a table with data not separated by years (either one-year data, or data without year specifications)
 				} else{
 					htmlSelectYear = document.getElementById('selectYear');
 					htmlSelectYear.disabled = true;
@@ -603,6 +469,10 @@
 		});
 	}
 	
+	/**
+	Function that queries on the existing attributes for a given table (and year, if there are data for multiple years)
+	and displays them in a select list.
+	*/
 	function activateAttributesList(){
 		htmlCheckChoro = document.getElementById('showChoropleth');
 		htmlCheckChoro.disabled = true;
@@ -633,9 +503,10 @@
 		});
 	}
 	
-	
+	/**
+	Function to query on a single attribute data (descriptor value) to be shown to the user.
+	*/
 	function showDataForAttribute(){
-	
 		has_attrib = true;
 	
 		htmlSelectTables = document.getElementById('selectTables');
@@ -666,60 +537,33 @@
 		
 		htmlCheckChoro = document.getElementById('showChoropleth');
 		htmlCheckChoro.disabled = false;
-		htmlCheckChoro.checked = false;
-		//choropleth();		
+		htmlCheckChoro.checked = false;	
 	}
 
-	
-	function resizeCirclePlus() {
+	/**
+	Function to increase a custom area size
+	*/
+	function resizeCustomPlus() {
             centroid = selectedCircleFeature.geometry.getCentroid();
 			selectedCircleFeature.geometry.resize(1.2,centroid);
 			polygonLayer.redraw();
         }
 	
-	function resizeCircleMinus() {
+	/**
+	Function to decrease a custom area size
+	*/
+	function resizeCustomMinus() {
             centroid = selectedCircleFeature.geometry.getCentroid();
 			selectedCircleFeature.geometry.resize(1.0 / 1.2,centroid);
 			polygonLayer.redraw();
         }
 		
 	
-	function toggleControl(element) {
-                for(key in drawControls) {
-                    var control = drawControls[key];
-                    if(element.value == key && element.checked) {
-                        control.activate();
-						polygonLayer.setVisibility(true);
-						removeOptions(htmlSelect);
-						selectItem.unselectAll();
-						document.getElementById("output-id").innerHTML = "";
-                    } else {
-                        control.deactivate();
-						polygonLayer.setVisibility(false);
-                    }
-                }
-            }
 
-	function allowPan(element) {
-		var stop = !element.checked;
-		for(var key in drawControls) {
-			drawControls[key].handler.stopDown = stop;
-			drawControls[key].handler.stopUp = stop;
-			}
-		}
-	
-	
-	function removeOptions(selectbox)
-	{
-		var i;
-		for(i=selectbox.options.length-1;i>=0;i--)
-		{
-			selectbox.remove(i);
-		}
-	}
 	
 	/**
-	* Creation of a new layer with a choropleth map that shows descriptor data
+	* Callback function that invokes another function to show a colored map, if the user ticked on the corresponding
+	checkbox in the web interface.
 	*/
 	function choropleth(){
 		
@@ -739,10 +583,13 @@
 				html_loading.innerHTML = "<small><b>Map ready</b></small>";
 				html_check_choro.disabled = false;				
 			});
-		}else alert("unchecked");
-		
+		}else alert("unchecked");	
 	}
 	
+	
+	/** 
+	Function to create a colored map layer based on the data values of the selected descriptor
+	*/
 	function show_colored_map(){
 		
 		choroplethStyles = createStyles();
@@ -879,3 +726,50 @@
             activeLayer.setOpacity(byOpacity/100);
 			document.getElementById("opacity").value=byOpacity;
         }
+		
+	//==================================	
+		
+		
+			/** Other functions
+			*/
+				function toggleControl(element) {
+					for(key in drawControls) {
+						var control = drawControls[key];
+						if(element.value == key && element.checked) {
+							control.activate();
+							polygonLayer.setVisibility(true);
+							removeOptions(htmlSelect);
+							selectItem.unselectAll();
+							document.getElementById("output-id").innerHTML = "";
+						} else {
+							control.deactivate();
+							polygonLayer.setVisibility(false);
+						}
+					}
+				}
+
+		function allowPan(element) {
+			var stop = !element.checked;
+			for(var key in drawControls) {
+				drawControls[key].handler.stopDown = stop;
+				drawControls[key].handler.stopUp = stop;
+				}
+			}
+		
+		
+		function removeOptions(selectbox)
+		{
+			var i;
+			for(i=selectbox.options.length-1;i>=0;i--)
+			{
+				selectbox.remove(i);
+			}
+		}
+		
+		function showSuccessMsg(){
+			showMsg("Transaction successfully completed");
+		};
+ 
+		function showFailureMsg(){
+			showMsg("An error occured while operating the transaction");
+		};
