@@ -166,7 +166,11 @@ Place in <geoserver data_dir>/www
 	  <div id="resize-id"></div>
 	  <div id="opacity-id">
 	  <b>Change active layer opacity: <input type="text" size="3" disabled="true" id="opacity" value="100" /> %</b>
-	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"></span>
+	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"><b>  Resize circular area: 
+						</b><input type="button" value='+' id="increaseCustom"
+						disabled="true" onClick="javascript:resizeCustomPlus();" />
+						<input type="button" value='-' id="decreaseCustom"
+						disabled="true" onClick="resizeCustomMinus();" /></span>
 	  </div>
 	  <br />
 	  <b>Step 1. Select data category to show:</b> <select name="selectCateg" id="selectCateg" onChange="javascript:activateTablesList();" disabled="true"></select>
@@ -174,8 +178,8 @@ Place in <geoserver data_dir>/www
 	  <b>Step 2. Select data to show:</b> <select name="selectTables" id="selectTables" onChange="javascript:activateYearSelector();" disabled="true"></select>
 	  <br />
 	  <b>Step 3. Select Year and Descriptor:</b> <select name="selectYear" id="selectYear" onChange="javascript:activateAttributesList();" disabled="true"></select>
-      <select name="selectAttrib" id="selectAttrib" onChange="javascript:showDataForAttribute();" disabled="true"></select>
-	  <br /><input type="checkbox" id="showChoropleth" disabled="true" checked="false" onClick="javascript:choropleth();" /> Display colored map based on descriptor values
+      <select name="selectAttrib" id="selectAttrib" onChange="javascript:showDataForAttribute(true);" disabled="true"></select>
+	  <br /><b>Colored map based on descriptor values:</b>  <input type="button" id="showChoropleth" disabled="true" value="Generate" onClick="javascript:choropleth();" />
 	  <br />
 	  <div id="data_shown"><table border="1"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td> 
 			<td><b>Descriptor value</b></td></tr></thead></table></div>

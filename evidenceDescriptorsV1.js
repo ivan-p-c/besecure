@@ -10,6 +10,9 @@
 
 		   var selectItem;
 		   var area_name;
+		   //Max and min value for a selected descriptor (used to define color thresholds in colored maps)
+		   var max_descriptor,min_descriptor;
+		   
 		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
 		   var defaultZoom = 14;
 		   var attrib_selected,table_selected;
@@ -118,14 +121,14 @@
 				{
 					featureselected: function(event)
 					{
-						selectedCircleFeature = event.feature;
-						
-						document.getElementById("resize_custom").innerHTML = 
-						"<b>  Resize circular area: </b><input type=\"button\" value='+'"+
-						"onClick=\"resizeCustomPlus();\" />" +
-						"<input type=\"button\" value='-'"+
-						"onClick=\"resizeCustomMinus();\" />";
-						
+						selectedCircleFeature = event.feature;		
+						document.getElementById("increaseCustom").disabled = false;
+						document.getElementById("decreaseCustom").disabled = false;
+					},
+					featureunselected: function(event)
+					{
+						document.getElementById("increaseCustom").disabled = true;
+						document.getElementById("decreaseCustom").disabled = true;
 					}
 				});
 				
@@ -211,7 +214,7 @@
 					/* 	var id = feature.geometry.id;
 						var area = feature.geometry.getGeodesicArea()/1000000; */
 						if(has_attrib){
-							showDataForAttribute();
+							showDataForAttribute(false);
 						}else{
 							if(has_table){
 								activateYearSelector();
@@ -354,8 +357,8 @@
 	data category. Such tables are displayed in a second select list.
 	*/
 	function activateTablesList(){
-		htmlCheckChoro = document.getElementById('showChoropleth');
-		htmlCheckChoro.disabled = true;
+		htmlButtonChoro = document.getElementById('showChoropleth');
+		htmlButtonChoro.disabled = true;
 		has_table = false;
 		has_attrib = false;
 	
@@ -393,8 +396,8 @@
 	is disabled and the table attributes are directly queried.
 	*/
 	function activateYearSelector(){
-		htmlCheckChoro = document.getElementById('showChoropleth');
-		htmlCheckChoro.disabled = true;
+		htmlButtonChoro = document.getElementById('showChoropleth');
+		htmlButtonChoro.disabled = true;
 		has_table = true;
 		has_attrib = false;
 	
@@ -474,8 +477,8 @@
 	and displays them in a select list.
 	*/
 	function activateAttributesList(){
-		htmlCheckChoro = document.getElementById('showChoropleth');
-		htmlCheckChoro.disabled = true;
+		htmlButtonChoro = document.getElementById('showChoropleth');
+		htmlButtonChoro.disabled = true;
 		has_attrib = false;
 	
 		htmlSelectYear = document.getElementById('selectYear');
@@ -506,7 +509,7 @@
 	/**
 	Function to query on a single attribute data (descriptor value) to be shown to the user.
 	*/
-	function showDataForAttribute(){
+	function showDataForAttribute(activateColoredMapButton){
 		has_attrib = true;
 	
 		htmlSelectTables = document.getElementById('selectTables');
@@ -535,9 +538,8 @@
 			"</table>";
 		});
 		
-		htmlCheckChoro = document.getElementById('showChoropleth');
-		htmlCheckChoro.disabled = false;
-		htmlCheckChoro.checked = false;	
+		htmlButtonChoro = document.getElementById('showChoropleth');
+		if(activateColoredMapButton) htmlButtonChoro.disabled = false;	
 	}
 
 	/**
@@ -572,18 +574,15 @@
 			choro_layer.destroy();
 		}
 		
-		var html_check_choro = document.getElementById("showChoropleth");
-		if(html_check_choro.checked){
-			var html_loading = document.getElementById("loading");
-			html_loading.innerHTML = "<small><b>Loading colored map. Please wait... (this may take a few seconds)</b></small>";
-			html_check_choro.disabled = true;
-			jQuery.post(server_url + "get_geojson_from_view.php",
-			{attr: attr_selected, table: table_selected}, function(data) {
-				show_colored_map();
-				html_loading.innerHTML = "<small><b>Map ready</b></small>";
-				html_check_choro.disabled = false;				
-			});
-		}else alert("unchecked");	
+		htmlButtonChoro = document.getElementById("showChoropleth");
+		htmlButtonChoro.disabled = true;
+		var html_loading = document.getElementById("loading");
+		html_loading.innerHTML = "<small><b>Loading colored map. Please wait... (this may take a few seconds)</b></small>";
+		jQuery.post(server_url + "get_geojson_from_view.php",
+		{attr: attr_selected, table: table_selected}, function(data) {
+			show_colored_map();
+			html_loading.innerHTML = "<small><b>Map ready</b></small>";			
+		});	
 	}
 	
 	
@@ -591,6 +590,17 @@
 	Function to create a colored map layer based on the data values of the selected descriptor
 	*/
 	function show_colored_map(){
+		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
+		table_selected = String(table_selected);	
+		attr_selected = htmlSelectAttr.options[htmlSelectAttr.selectedIndex].value;
+		attr_selected = String(attr_selected);
+		jQuery.post(server_url + "get_max_min_descriptor.php",
+		{attr: attr_selected, table: table_selected}, function(data) {
+		    maxmin = JSON.parse(data);
+			max_descriptor = maxmin['max'];
+			min_descriptor = maxmin['min'];
+			console.log(max_descriptor + ":" + min_descriptor);
+		});
 		
 		choroplethStyles = createStyles();
 		
@@ -605,7 +615,7 @@
 		   projection: new OpenLayers.Projection("EPSG:4326"),
 		   strategies: [new OpenLayers.Strategy.Fixed()],
 		   protocol: new OpenLayers.Protocol.HTTP({
-			  url: "http://localhost:80/choropleth_results.geojson",
+			  url: server_url + "choropleth_results.geojson",
 			  format: new OpenLayers.Format.GeoJSON()
 		   }),
 		   styleMap: choroplethStyles
