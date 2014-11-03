@@ -8,7 +8,7 @@ Place in <geoserver data_dir>/www
         #map { 
             width: 60%; 
             height: 70%; 
-            border: solid 2px #808080; 
+            border: solid 2px #808080;
 			}
 				/* Custom editing toolbar */
 		.customEditingToolbar {
@@ -161,12 +161,38 @@ Place in <geoserver data_dir>/www
 
 	  
         <h2>Evidence for Descriptors Definition V1.0</h2>
-        <div id="map"></div>  
-		<div id="loading"><small><b>Map ready</b></small></div>
+        <table id="maptable" border="0" style="margin: 0;
+		padding: 0;
+		border: 0;
+		outline: 0;
+		font-size: 100%;
+		vertical-align: baseline;
+		background: transparent;"><tr><td></td><td></td></tr></table>  
+		<div>
+			<div id="map"></div>
+			<div id="map_caption" style="float:right;vertical-align:top">
+				<table align="left">
+				<thead>
+					<tr>
+					<td>Area color</td><td>Descriptor values</td>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+					<td></td><td>-</td>
+					</tr>
+				</tbody>
+				</table>
+				</span>
+			</div>
+		
+
+	  <div>
+	  <div id="loading"><small><b>Map ready</b></small></div>
 	  <div id="resize-id"></div>
 	  <div id="opacity-id">
 	  <b>Change active layer opacity: <input type="text" size="3" disabled="true" id="opacity" value="100" /> %</b>
-	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"><b>  Resize circular area: 
+	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"><b>  Resize selected custom area: 
 						</b><input type="button" value='+' id="increaseCustom"
 						disabled="true" onClick="javascript:resizeCustomPlus();" />
 						<input type="button" value='-' id="decreaseCustom"
@@ -183,5 +209,6 @@ Place in <geoserver data_dir>/www
 	  <br />
 	  <div id="data_shown"><table border="1"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td> 
 			<td><b>Descriptor value</b></td></tr></thead></table></div>
+		</div></div>
 	</body>
 </html>

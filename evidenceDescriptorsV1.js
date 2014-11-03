@@ -580,7 +580,7 @@
 		html_loading.innerHTML = "<small><b>Loading colored map. Please wait... (this may take a few seconds)</b></small>";
 		jQuery.post(server_url + "get_geojson_from_view.php",
 		{attr: attr_selected, table: table_selected}, function(data) {
-			show_colored_map();
+			show_colored_map(attr_selected,table_selected);
 			html_loading.innerHTML = "<small><b>Map ready</b></small>";			
 		});	
 	}
@@ -589,17 +589,13 @@
 	/** 
 	Function to create a colored map layer based on the data values of the selected descriptor
 	*/
-	function show_colored_map(){
-		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
-		table_selected = String(table_selected);	
-		attr_selected = htmlSelectAttr.options[htmlSelectAttr.selectedIndex].value;
-		attr_selected = String(attr_selected);
+	function show_colored_map(c_attribute,c_table){
 		jQuery.post(server_url + "get_max_min_descriptor.php",
-		{attr: attr_selected, table: table_selected}, function(data) {
+		{attr: c_attribute, table: c_table}, function(data) {
 		    maxmin = JSON.parse(data);
-			max_descriptor = maxmin['max'];
-			min_descriptor = maxmin['min'];
-			console.log(max_descriptor + ":" + min_descriptor);
+			max_descriptor = maxmin['maximum'];
+			min_descriptor = maxmin['minimum'];
+			console.log(c_attribute + data + " -> " + max_descriptor + ":" + min_descriptor);
 		});
 		
 		choroplethStyles = createStyles();
