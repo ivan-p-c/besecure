@@ -149,6 +149,35 @@ Place in <geoserver data_dir>/www
 				background:#fafafa
 		}
 		
+		div.olControlSaveFeaturesItemInactive {
+			background-image: url(img/save_features_off.png) !important;
+		}
+		
+		
+		.olControlDeleteFeatureItemInactive {
+		background-image: url(img/remove_features_off.png) !important;
+		}
+		
+		.olControlDeleteFeatureItemActive {
+		background-image: url(img/remove_features_on.png) !important;
+		}
+		
+		.olControlModifyFeatureItemInactive {
+			background-image: url(img/modify_features_off.png) !important;
+		}
+		
+		.olControlModifyFeatureItemActive {
+			background-image: url(img/modify_features_on.png) !important;
+		}
+		
+		.olControlDrawFeatureItemInactive {
+			background-image: url(img/draw_circle_off.png) !important;
+		}
+		
+		.olControlDrawFeatureItemActive {
+			background-image: url(img/draw_circle_on.png) !important;
+		}
+		
     </style>
         <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
@@ -177,28 +206,29 @@ Place in <geoserver data_dir>/www
 				</tbody>
 				</table>
 			</div>
-	  <div>
-	  <div id="loading"><small><b>Map ready</b></small></div>
-	  <div id="resize-id"></div>
-	  <div id="opacity-id">
-	  <b>Change active layer opacity: <input type="text" size="3" disabled="true" id="opacity" value="100" /> %</b>
-	  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"><b>  Resize selected custom area: 
-						</b><input type="button" value='+' id="increaseCustom"
-						disabled="true" onClick="javascript:resizeCustomPlus();" />
-						<input type="button" value='-' id="decreaseCustom"
-						disabled="true" onClick="resizeCustomMinus();" /></span>
-	  </div>
-	  <br />
-	  <b>Step 1. Select data category to show:</b> <select name="selectCateg" id="selectCateg" onChange="javascript:activateTablesList();" disabled="true"></select>
-	  <br />
-	  <b>Step 2. Select data to show:</b> <select name="selectTables" id="selectTables" onChange="javascript:activateYearSelector();" disabled="true"></select>
-	  <br />
-	  <b>Step 3. Select Year and Descriptor:</b> <select name="selectYear" id="selectYear" onChange="javascript:activateAttributesList();" disabled="true"></select>
-      <select name="selectAttrib" id="selectAttrib" onChange="javascript:showDataForAttribute(true);" disabled="true"></select>
-	  <br /><b>Colored map based on descriptor values:</b>  <input type="button" id="showChoropleth" disabled="true" value="Generate" onClick="javascript:choropleth();" />
-	  <br />
-	  <div id="data_shown"><table border="1"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td> 
-			<td><b>Descriptor value</b></td></tr></thead></table></div>
-		</div></div>
+			  <div>
+			  <div id="loading"><small><b>Map ready</b></small></div>
+			  <div id="resize-id"></div>
+			  <div id="opacity-id">
+			  <b>Change active layer opacity: <input type="text" size="3" disabled="true" id="opacity" value="100" /> %</b>
+			  <input type="range"  min="0" max="100" value="100" onchange="changeOpacity(this.value)" /><span id="resize_custom"><b>  Resize selected custom area: 
+								</b><input type="button" value='+' id="increaseCustom"
+								disabled="true" onClick="javascript:resizeCustomPlus();" />
+								<input type="button" value='-' id="decreaseCustom"
+								disabled="true" onClick="resizeCustomMinus();" /></span>
+			  </div>
+			  <br />
+			  <b>Step 1. Select data category to show:</b> <select name="selectCateg" id="selectCateg" onChange="javascript:activateTablesList();" disabled="true"></select>
+			  <br />
+			  <b>Step 2. Select data to show:</b> <select name="selectTables" id="selectTables" onChange="javascript:activateYearSelector();" disabled="true"></select>
+			  <br />
+			  <b>Step 3. Select Year and Descriptor:</b> <select name="selectYear" id="selectYear" onChange="javascript:activateAttributesList();" disabled="true"></select>
+			  <select name="selectAttrib" id="selectAttrib" onChange="javascript:showDataForAttribute(true);" disabled="true"></select>
+			  <br /><b>Colored map based on descriptor values:</b>  <input type="button" id="showChoropleth" disabled="true" value="Generate" onClick="javascript:choropleth();" />
+			  <br />
+			  <div id="data_shown"><table border="1"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td> 
+					<td><b>Descriptor value</b></td></tr></thead></table></div>
+				</div>
+		</div>
 	</body>
 </html>
