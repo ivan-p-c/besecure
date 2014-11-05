@@ -87,6 +87,34 @@
 				saveStrategy.events.register("success", '', showSuccessMsg);
 				saveStrategy.events.register("failure", '', showFailureMsg);
 				
+				
+				//create a style object for polygon layer (custom areas)
+				var custom_style = new OpenLayers.Style();
+				var custom_select_style = new OpenLayers.Style();
+				//rule used for all areas displayed in geo_layer, related to case study areas (e.g. wards, LGDs)
+				var custom_rule_fsa = new OpenLayers.Rule({
+					symbolizer: {
+					fillColor: "#ff7777",
+					fillOpacity: 0.5,
+					strokeColor: "#ff2222",
+					strokeWidth: 1,
+					strokeDashstyle: "solid",
+					fontSize: 14}
+				});
+				var custom_rule_highlight = new OpenLayers.Rule({
+				symbolizer: {
+					fillColor: "#ff3333",
+					fillOpacity: 0.6,
+					strokeColor: "#FF0000",
+					strokeWidth: 2,
+					strokeDashstyle: "solid",
+					fontSize: 16,
+					fontWeight: "600"}
+				});
+				custom_style.addRules([custom_rule_fsa]);
+				custom_select_style.addRules([custom_rule_highlight]);
+				var custom_styles = new OpenLayers.StyleMap({'default': custom_style,'select': custom_select_style});
+				
 				//Layer to create and deal with custom areas (polygons and circles)
 				polygonLayer = new OpenLayers.Layer.Vector("Custom Areas", {
 					visibility: true,
@@ -94,6 +122,7 @@
 					new OpenLayers.Strategy.BBOX(), 
 					saveStrategy
 					],
+					styleMap: custom_styles,
 					protocol: new OpenLayers.Protocol.WFS({
 						url: "http://localhost:8080/geoserver/wfs",
 						featurePrefix:"cite",
@@ -530,6 +559,7 @@
 		jQuery.post(server_url + "get_simple_data.php",
 		{attr: attr_selected, table: table_selected, area: area_name}, function(data) {
 			htmlResult = document.getElementById("data_shown");
+			if(data == "")	 data = "N/A";
 			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
 			"<td><b>Descriptor value</b></td></tr></thead>" +
 			"<tbody>" +
