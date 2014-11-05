@@ -160,14 +160,7 @@ Place in <geoserver data_dir>/www
 <body onload="init()">
 
 	  
-        <h2>Evidence for Descriptors Definition V1.0</h2>
-        <table id="maptable" border="0" style="margin: 0;
-		padding: 0;
-		border: 0;
-		outline: 0;
-		font-size: 100%;
-		vertical-align: baseline;
-		background: transparent;"><tr><td></td><td></td></tr></table>  
+        <h2>Evidence for Descriptors Definition</h2>
 		<div>
 			<div id="map"></div>
 			<div id="map_caption" style="float:right;vertical-align:top">
@@ -183,10 +176,7 @@ Place in <geoserver data_dir>/www
 					</tr>
 				</tbody>
 				</table>
-				</span>
 			</div>
-		
-
 	  <div>
 	  <div id="loading"><small><b>Map ready</b></small></div>
 	  <div id="resize-id"></div>

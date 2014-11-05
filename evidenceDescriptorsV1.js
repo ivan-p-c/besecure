@@ -590,49 +590,107 @@
 	Function to create a colored map layer based on the data values of the selected descriptor
 	*/
 	function show_colored_map(c_attribute,c_table){
+		var max_descriptor,min_descriptor;
+		var thresholds = [];
 		jQuery.post(server_url + "get_max_min_descriptor.php",
 		{attr: c_attribute, table: c_table}, function(data) {
 		    maxmin = JSON.parse(data);
 			max_descriptor = maxmin['maximum'];
 			min_descriptor = maxmin['minimum'];
-			console.log(c_attribute + data + " -> " + max_descriptor + ":" + min_descriptor);
+			
+			if(c_attribute.indexOf("percent") == -1){
+			
+				thresholds.push(Math.round(parseFloat(max_descriptor)));
+				thresholds.push(Math.round(parseFloat(min_descriptor) 
+				+ (parseFloat(max_descriptor)
+				- parseFloat(min_descriptor))*0.8));
+				thresholds.push(Math.round(parseFloat(min_descriptor) 
+				+ ((parseFloat(max_descriptor)
+				- parseFloat(min_descriptor))*0.6)));
+				thresholds.push(Math.round(parseFloat(min_descriptor) 
+				+ ((parseFloat(max_descriptor)
+				- parseFloat(min_descriptor))*0.4)));
+				thresholds.push(Math.round(parseFloat(min_descriptor) 
+				+ ((parseFloat(max_descriptor)
+				- parseFloat(min_descriptor))*0.2)));
+				thresholds.push(Math.round(parseFloat(min_descriptor))); 
+				
+				//Create a legend with values for colors in the map
+				var legend = document.getElementById("map_caption");
+				legend.innerHTML = "<table align=\"left\" style=\"text-align:center\">" +
+					"<thead><tr><td>Area color</td><td>Descriptor values</td></tr></thead><tbody>" +
+					"<tr><td><span style=\"background-color: #003060;color: #003060\">...</span>" +
+					"</td><td>"+ thresholds[1] + "-" + thresholds[0] + "</td></tr>" +
+					"<tr><td><span style=\"background-color: #00719f;color: #00719f\">...</span>" +
+					"</td><td>"+ thresholds[2] + "-" + thresholds[1] + "</td></tr>" +
+					"<tr><td><span style=\"background-color: #00a9df;color: #00a9df\">...</span>" +
+					"</td><td>"+ thresholds[3] + "-" + thresholds[2] + "</td></tr>" +
+					"<tr><td><span style=\"background-color: #68c2e7;color: #68c2e7\">...</span>" +
+					"</td><td>"+ thresholds[4] + "-" + thresholds[3] + "</td></tr>" +
+					"<tr><td><span style=\"background-color: #aed0da;color: #aed0da\">...</span>" +
+					"</td><td>"+ thresholds[5] + "-" + thresholds[4] + "</td></tr>" +
+					"</tbody></table>";
+			}else{
+				thresholds.push(100);
+				thresholds.push(80);
+				thresholds.push(60);
+				thresholds.push(40);
+				thresholds.push(20);
+				thresholds.push(0);
+				//Create a legend with values for colors in the map
+				var legend = document.getElementById("map_caption");
+				legend.innerHTML = "<table align=\"left\" style=\"text-align:center\">" +
+					"<thead><tr><td>Area color</td><td>Descriptor values</td></tr></thead><tbody>" +
+					"<tr><td><span style=\"background-color: #003060;color: #003060\">...</span>" +
+					"</td><td>"+ thresholds[1] + "-" + thresholds[0] + " %</td></tr>" +
+					"<tr><td><span style=\"background-color: #00719f;color: #00719f\">...</span>" +
+					"</td><td>"+ thresholds[2] + "-" + thresholds[1] + " %</td></tr>" +
+					"<tr><td><span style=\"background-color: #00a9df;color: #00a9df\">...</span>" +
+					"</td><td>"+ thresholds[3] + "-" + thresholds[2] + " %</td></tr>" +
+					"<tr><td><span style=\"background-color: #68c2e7;color: #68c2e7\">...</span>" +
+					"</td><td>"+ thresholds[4] + "-" + thresholds[3] + " %</td></tr>" +
+					"<tr><td><span style=\"background-color: #aed0da;color: #aed0da\">...</span>" +
+					"</td><td>"+ thresholds[5] + "-" + thresholds[4] + " %</td></tr>" +
+					"</tbody></table>";
+			}
+			choroplethStyles = createStyles(thresholds);
+			
+			//CHANGE COLOR OF CUSTOM AREAS TO RED
+			
+			// Configure default styles.
+			OpenLayers.Feature.Vector.style['default']['fillColor'] = "#cccccc";
+			OpenLayers.Feature.Vector.style['default']['fillOpacity'] = 0.9;
+			OpenLayers.Feature.Vector.style['default']['strokeColor'] = "#000000";
+			OpenLayers.Feature.Vector.style['default']['strokeOpacity'] = 0.1;
+			OpenLayers.Feature.Vector.style['default']['stroke'] = true;
+			
+			choro_layer = new OpenLayers.Layer.Vector("Colored Map", {
+			   projection: new OpenLayers.Projection("EPSG:4326"),
+			   strategies: [new OpenLayers.Strategy.Fixed()],
+			   protocol: new OpenLayers.Protocol.HTTP({
+				  url: server_url + "choropleth_results.geojson",
+				  format: new OpenLayers.Format.GeoJSON()
+			   }),
+			   styleMap: choroplethStyles
+			});
+			
+			map.addLayer(choro_layer);
+			map.raiseLayer(geo_layer,100);
 		});
-		
-		choroplethStyles = createStyles();
-		
-		// Configure default styles.
-		OpenLayers.Feature.Vector.style['default']['fillColor'] = "#cccccc";
-		OpenLayers.Feature.Vector.style['default']['fillOpacity'] = 0.9;
-		OpenLayers.Feature.Vector.style['default']['strokeColor'] = "#000000";
-		OpenLayers.Feature.Vector.style['default']['strokeOpacity'] = 0.1;
-		OpenLayers.Feature.Vector.style['default']['stroke'] = true;
-		
-		choro_layer = new OpenLayers.Layer.Vector("Colored Map", {
-		   projection: new OpenLayers.Projection("EPSG:4326"),
-		   strategies: [new OpenLayers.Strategy.Fixed()],
-		   protocol: new OpenLayers.Protocol.HTTP({
-			  url: server_url + "choropleth_results.geojson",
-			  format: new OpenLayers.Format.GeoJSON()
-		   }),
-		   styleMap: choroplethStyles
-		});
-		
-		map.addLayer(choro_layer);
-		map.raiseLayer(geo_layer,100);
 	}
 	
 	
 	/**
 	* Creates a choropleth stylemap to define the map shading colors.
 	*/
-	function createStyles() {
+	function createStyles(thresholds) {
 		var theme = new OpenLayers.Style();
 		
 		range5 = new OpenLayers.Rule({
 				filter:new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 				property:"descriptor",
-				value:750
+				value:thresholds[1]
 			}),
 			symbolizer:{Polygon:{fillColor:'#003060'}}
 		});
@@ -644,12 +702,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"descriptor",
-					  value:750
+					  value:thresholds[1]
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"descriptor",
-					  value:500
+					  value:thresholds[2]
 					})
 				]
 			}),
@@ -663,12 +721,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"descriptor",
-					  value:500
+					  value:thresholds[2]
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"descriptor",
-					  value:200
+					  value:thresholds[3]
 					})
 				]
 			}),
@@ -682,12 +740,12 @@
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.LESS_THAN,
 					  property:"descriptor",
-					  value:200
+					  value:thresholds[3]
 					}),
 					new OpenLayers.Filter.Comparison({
 					  type:OpenLayers.Filter.Comparison.GREATER_THAN_OR_EQUAL_TO,
 					  property:"descriptor",
-					  value:50
+					  value:thresholds[4]
 					})
 				]
 			}),
@@ -698,7 +756,7 @@
 			filter: new OpenLayers.Filter.Comparison({
 				type:OpenLayers.Filter.Comparison.LESS_THAN,
 				property:"descriptor",
-				value:50
+				value:thresholds[4]
 			}),
 			symbolizer:{Polygon:{fillColor:'#aed0da'}}
 		});
