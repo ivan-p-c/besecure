@@ -4,6 +4,8 @@
 		   var server_url = "http://localhost:80/";
 		   //Geoserver layers here
 		   var geoserver_url = "http://localhost:8080/geoserver/";
+		   //var geoserver_url = "http://cdcgeoserver.cloudapp.net:8080/geoserver/";
+		   
 		   //map
 		   var map;
 		   //Main layers
@@ -447,7 +449,7 @@
 		htmlSelectTables = document.getElementById('selectTables');
 		htmlSelectTables.disabled = false;
 		removeOptions(htmlSelectTables);						
-		jQuery.post(server_url + "get_data_tables.php", {category: category_selected}, function(data) {
+		jQuery.post(server_url + "get_data_tables.php", {category: category_selected, cs_area: active_cs_area.name}, function(data) {
 				jsonData = JSON.parse(data);
 				for (var i = 0; i < jsonData.length; i++) {
 					cname = jsonData[i].name_shown;
@@ -480,7 +482,7 @@
 		table_selected = htmlSelectTables.options[htmlSelectTables.selectedIndex].value;
 		table_selected = String(table_selected);
 		//Show all descriptors' data in the table selected
-		jQuery.post(server_url + "get_all_attrib_data.php", {table: table_selected, area: area_name}, function(data) {
+		jQuery.post(server_url + "get_all_attrib_data.php", {table: table_selected, area: area_name, cs_area: active_cs_area.name}, function(data) {
 				jsonData = JSON.parse(data);
 				table_content = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
 				"<td><b>Descriptor value</b></td></tr></thead><tbody>";
@@ -501,7 +503,7 @@
 				htmlResult.innerHTML = table_content;
 		});
 		//Check if the table selected has data for a range of years
-		jQuery.post(server_url + "check_table_years.php", {table: table_selected}, function(data) {
+		jQuery.post(server_url + "check_table_years.php", {table: table_selected,cs_area: active_cs_area.name}, function(data) {
 				jsonData = JSON.parse(data);
 				is_per_year = jsonData.per_year;
 				//Operations for a table with data for multiple years
@@ -599,7 +601,7 @@
 		}
 		
 		jQuery.post(server_url + "get_simple_data.php",
-		{attr: attr_selected, table: table_selected, area: area_name}, function(data) {
+		{attr: attr_selected, table: table_selected, area: area_name, cs_area: active_cs_area.name}, function(data) {
 			htmlResult = document.getElementById("data_shown");
 			if(data == "")	 data = "N/A";
 			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
@@ -651,7 +653,7 @@
 		var html_loading = document.getElementById("loading");
 		html_loading.innerHTML = "<small><b>Loading colored map. Please wait... (this may take a few seconds)</b></small>";
 		jQuery.post(server_url + "get_geojson_from_view.php",
-		{attr: attr_selected, table: table_selected}, function(data) {
+		{attr: attr_selected, table: table_selected, cs_area: active_cs_area.name}, function(data) {
 			show_colored_map(attr_selected,table_selected);
 			html_loading.innerHTML = "<small><b>Map ready</b></small>";			
 		});	
@@ -665,7 +667,7 @@
 		var max_descriptor,min_descriptor;
 		var thresholds = [];
 		jQuery.post(server_url + "get_max_min_descriptor.php",
-		{attr: c_attribute, table: c_table}, function(data) {
+		{attr: c_attribute, table: c_table, cs_area:active_cs_area.name}, function(data) {
 		    maxmin = JSON.parse(data);
 			max_descriptor = maxmin['maximum'];
 			min_descriptor = maxmin['minimum'];
