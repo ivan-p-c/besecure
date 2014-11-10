@@ -189,7 +189,13 @@ Place in <geoserver data_dir>/www
 <body onload="init()">
 
 	  
-        <h2>Evidence for Descriptors Definition</h2>
+        <h3>Evidence for Descriptors Definition</h3>
+		Case study area shown: <select name="select_cs_area" id="select_cs_area"
+		onChange='window.location.href=location.href.substring(0, top.location.href.indexOf("?"))+"?cs_area="+this[this.selectedIndex].value;'>
+		<option value="northern_ireland">Northern Ireland (UK)</option>
+		<option value="london">London (UK)</option>
+		<option value="poznan">Poznan (Poland)</option>
+		</select>
 		<div>
 			<div id="map"></div>
 			<div id="map_caption" style="float:right;vertical-align:top">

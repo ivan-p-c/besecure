@@ -58,13 +58,44 @@
 			
 			/*Instantiating objects for each Case Study Area*/
 			//Northern Ireland
-			var northern_ireland = new CaseStudyArea("northern_ireland",-5.92, 54.59,14);
-			var poznan = new CaseStudyArea("northern_ireland",-5.92, 54.59,14);
-			var london = new CaseStudyArea("northern_ireland",-5.92, 54.59,14);
+			var northern_ireland = new CaseStudyArea("northern_ireland", -5.92, 54.59, 14);
+			var poznan = new CaseStudyArea("poznan", 16.92, 52.41, 13);
+			var london = new CaseStudyArea("london", -0.12, 51.5, 14);
+			
+			/*This variable indicates the active case study area to be shown in the map*/
+			var active_cs_area = northern_ireland;
 		
-//=======INITIALIZING FUNCTION=======
+//=======INITIALIZING FUNCTIONS=======
+
+			function getURLparameter(){
+				csa_parameter = window.location.search.substring(1);
+				csa_parameter = csa_parameter.split("=");
+				console.log(csa_parameter[1]);
+				select_cs_areas = document.getElementById("select_cs_area");
+				switch(csa_parameter[1]) {
+					case "northern_ireland":
+						active_cs_area = northern_ireland;
+						select_cs_areas.selectedIndex = 0;
+						break;
+					case "london":
+						active_cs_area = london;
+						select_cs_areas.selectedIndex = 1;
+						break;
+					case "poznan":
+						active_cs_area = poznan;
+						select_cs_areas.selectedIndex = 2;
+						break;
+					default:
+						active_cs_area = northern_ireland;
+						select_cs_areas.selectedIndex = 0;
+				}
+			}
 
            function init(){
+		   
+				//get the case study area parameter
+				getURLparameter();
+				
 			    //local variables with SRS projections: mercator for base map and WGS84 for additional layers
 			    var geographic = new OpenLayers.Projection("EPSG:4326");
 			    var mercator = new OpenLayers.Projection("EPSG:900913");
@@ -288,7 +319,7 @@
 				map.addLayer(geo_layer);
 			
 				//=== Positioning and zooming map ===
-                map.setCenter(new OpenLayers.LonLat(northern_ireland.lon, northern_ireland.lat).transform(geographic,mercator), northern_ireland.zoom);
+                map.setCenter(new OpenLayers.LonLat(active_cs_area.lon, active_cs_area.lat).transform(geographic,mercator), active_cs_area.zoom);
 				//Adding navigating controller
 				var navigate = new OpenLayers.Control.Navigation({
 					dragPanOptions: {
@@ -357,7 +388,6 @@
 				activateCategoriesList();
 	}
 	// ======= END OF INITIALIZING FUNCTION =========
-	
 	
 	
 	/**
