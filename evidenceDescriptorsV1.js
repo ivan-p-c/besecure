@@ -2,6 +2,8 @@
 		   
 		   //PHP and geojson files are stored here
 		   var server_url = "http://localhost:80/";
+		   //Geoserver layers here
+		   var geoserver_url = "http://localhost:8080/geoserver/";
 		   //map
 		   var map;
 		   //Main layers
@@ -13,8 +15,6 @@
 		   //Max and min value for a selected descriptor (used to define color thresholds in colored maps)
 		   var max_descriptor,min_descriptor;
 		   
-		   //WARNING: The lower the zoom value, the wider area visualized, but the longer layers take to be loaded
-		   var defaultZoom = 14;
 		   var attrib_selected,table_selected;
 		   var has_table,has_attrib = false;
 		   var drawControls;
@@ -48,7 +48,19 @@
 				CLASS_NAME: "OpenLayers.Control.DeleteFeature"
 			});
 		
-
+			/* Defining a "class" CaseStudyArea as a JS function */
+			function CaseStudyArea(name,lon,lat,zoom){
+				this.name = name;
+				this.lon = lon;
+				this.lat = lat;
+				this.zoom = zoom;
+			}
+			
+			/*Instantiating objects for each Case Study Area*/
+			//Northern Ireland
+			var northern_ireland = new CaseStudyArea("northern_ireland",-5.92, 54.59,14);
+			var poznan = new CaseStudyArea("northern_ireland",-5.92, 54.59,14);
+			var london = new CaseStudyArea("northern_ireland",-5.92, 54.59,14);
 		
 //=======INITIALIZING FUNCTION=======
 
@@ -124,7 +136,7 @@
 					],
 					styleMap: custom_styles,
 					protocol: new OpenLayers.Protocol.WFS({
-						url: "http://localhost:8080/geoserver/wfs",
+						url: geoserver_url+"wfs",
 						featurePrefix:"cite",
 						featureType: "custom_areas",
 						featureNS: "http://www.opengeospatial.net/cite",
@@ -209,7 +221,7 @@
 					projection: new OpenLayers.Projection("EPSG:4326"),
 					protocol: new OpenLayers.Protocol.WFS({          
 					version: "1.1.0",
-					url: "http://localhost:8080/geoserver/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:osni_ward93&propertyName=area",            
+					url: geoserver_url+"wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:osni_ward93&propertyName=area",            
 					featurePrefix: "cite",
 					featureType: "osni_ward93",
 					featureNS: "http://www.opengeospatial.net/cite",
@@ -265,7 +277,7 @@
 				asb2012_layer = new OpenLayers.Layer.WMS
 					(
 					"ASB",
-					"http://localhost:8080/geoserver/wms",
+					geoserver_url+"wms",
 					{layers: 'cite:psni_data', transparent:false, format: 'image/png'}, {isBaseLayer: false, opacity: 1}
 					); 
 				
@@ -276,7 +288,7 @@
 				map.addLayer(geo_layer);
 			
 				//=== Positioning and zooming map ===
-                map.setCenter(new OpenLayers.LonLat(-5.92, 54.59).transform(geographic,mercator), defaultZoom);
+                map.setCenter(new OpenLayers.LonLat(northern_ireland.lon, northern_ireland.lat).transform(geographic,mercator), northern_ireland.zoom);
 				//Adding navigating controller
 				var navigate = new OpenLayers.Control.Navigation({
 					dragPanOptions: {
