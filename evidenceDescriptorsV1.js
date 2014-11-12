@@ -8,6 +8,19 @@
 		   
 		   //map
 		   var map;
+		   
+		   	/* Defining a "class" GeoLayerInfo as a JS function */
+			function GeoLayerInfo(name,level){
+				this.name = name;
+				this.level = level;
+			}
+		   //layer containers for the existing geographical layers in a cs_area
+		   var geo_layers_info_northern_ireland = [new GeoLayerInfo("osni_ward93","ward"),new GeoLayerInfo("osni_lgd93","lgd"),new GeoLayerInfo("belfast_met_area","lgd")];
+		   var geo_layers_info_london = [new GeoLayerInfo("ward_2012","ward"),new GeoLayerInfo("lad_2012","lgd"),new GeoLayerInfo("lsoa_2011","lsoa")];
+		   var geo_layers_info_poznan = [new GeoLayerInfo("osiedla_ward2000","ward")];
+		   var active_geo_layers = geo_layers_info_northern_ireland;
+		   var active_geo_layer_index = 0;
+		   
 		   //Main layers
 		   var geo_layer,polygonLayer,choro_layer;
 		   var htmlSelect;
@@ -70,27 +83,84 @@
 //=======INITIALIZING FUNCTIONS=======
 
 			function getURLparameter(){
-				csa_parameter = window.location.search.substring(1);
-				csa_parameter = csa_parameter.split("=");
-				console.log(csa_parameter[1]);
+				csa_parameters = window.location.search.substring(1);
+				var first_param,second_param;
+				if(csa_parameters == ""){
+					first_param = ["cs_area","northern_ireland"];
+					second_param = ["geo_layer","osni_ward93"];
+				}else{
+					csa_parameters = csa_parameters.split("&");
+					first_param = csa_parameters[0];
+					second_param = csa_parameters[1];
+					first_param = first_param.split("=");		
+					second_param = second_param.split("=");
+				}
 				select_cs_areas = document.getElementById("select_cs_area");
-				switch(csa_parameter[1]) {
+				switch(first_param[1]) {
 					case "northern_ireland":
 						active_cs_area = northern_ireland;
 						select_cs_areas.selectedIndex = 0;
+						active_geo_layers = geo_layers_info_northern_ireland;
 						break;
 					case "london":
 						active_cs_area = london;
 						select_cs_areas.selectedIndex = 1;
+						active_geo_layers = geo_layers_info_london;
 						break;
 					case "poznan":
 						active_cs_area = poznan;
 						select_cs_areas.selectedIndex = 2;
+						active_geo_layers = geo_layers_info_poznan;
 						break;
 					default:
 						active_cs_area = northern_ireland;
 						select_cs_areas.selectedIndex = 0;
+						active_geo_layers = geo_layers_info_northern_ireland;
 				}
+				var geo_layer_selector = document.getElementById("select_geo_layer");
+				for (var i = 0; i < active_geo_layers.length; i++) {
+					selectBoxOption = document.createElement("option");
+					selectBoxOption.value = active_geo_layers[i].name;
+					selectBoxOption.text = active_geo_layers[i].name + " ("+ active_geo_layers[i].level.toUpperCase() +")";
+					geo_layer_selector.add(selectBoxOption, null);
+					if(second_param[1] == active_geo_layers[i].name){
+						geo_layer_selector.selectedIndex = i;
+						active_geo_layer_index = i;
+					}
+				}
+			}
+			
+			function update_geo_layers(cs_area){
+				switch(cs_area) {
+					case "northern_ireland":
+						active_cs_area = northern_ireland;
+						select_cs_areas.selectedIndex = 0;
+						active_geo_layers = geo_layers_info_northern_ireland;
+						break;
+					case "london":
+						active_cs_area = london;
+						select_cs_areas.selectedIndex = 1;
+						active_geo_layers = geo_layers_info_london;
+						break;
+					case "poznan":
+						active_cs_area = poznan;
+						select_cs_areas.selectedIndex = 2;
+						active_geo_layers = geo_layers_info_poznan;
+						break;
+					default:
+						active_cs_area = northern_ireland;
+						select_cs_areas.selectedIndex = 0;
+						active_geo_layers = geo_layers_info_northern_ireland;
+				}
+				var geo_layer_selector = document.getElementById("select_geo_layer");
+				removeOptions(geo_layer_selector);
+				for (var i = 0; i < active_geo_layers.length; i++) {
+					selectBoxOption = document.createElement("option");
+					selectBoxOption.value = active_geo_layers[i].name;
+					selectBoxOption.text = active_geo_layers[i].name + " ("+ active_geo_layers[i].level.toUpperCase() +")";
+					geo_layer_selector.add(selectBoxOption, null); 
+				}
+				geo_layer_selector.selectedIndex = 0;
 			}
 
            function init(){
@@ -248,15 +318,15 @@
 								
 				
 				//WFS LAYER definition
-				geo_layer = new OpenLayers.Layer.Vector("Wards", {
+				geo_layer = new OpenLayers.Layer.Vector(active_geo_layers[active_geo_layer_index].level.toUpperCase(), {
 					strategies: [new OpenLayers.Strategy.BBOX()],
 					styleMap: styles,
 					projection: new OpenLayers.Projection("EPSG:4326"),
 					protocol: new OpenLayers.Protocol.WFS({          
 					version: "1.1.0",
-					url: geoserver_url+"wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:osni_ward93&propertyName=area",            
+					url: geoserver_url+"wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=cite:"+active_geo_layers[active_geo_layer_index].name+"&propertyName=area",            
 					featurePrefix: "cite",
-					featureType: "osni_ward93",
+					featureType: active_geo_layers[active_geo_layer_index].name,
 					featureNS: "http://www.opengeospatial.net/cite",
 					outputFormat: "application/json",
 					readFormat: new OpenLayers.Format.GeoJSON(),
@@ -449,7 +519,7 @@
 		htmlSelectTables = document.getElementById('selectTables');
 		htmlSelectTables.disabled = false;
 		removeOptions(htmlSelectTables);						
-		jQuery.post(server_url + "get_data_tables.php", {category: category_selected, cs_area: active_cs_area.name}, function(data) {
+		jQuery.post(server_url + "get_data_tables.php", {category: category_selected, cs_area: active_cs_area.name, geo_level: active_geo_layers[active_geo_layer_index].level}, function(data) {
 				jsonData = JSON.parse(data);
 				for (var i = 0; i < jsonData.length; i++) {
 					cname = jsonData[i].name_shown;
@@ -601,7 +671,7 @@
 		}
 		
 		jQuery.post(server_url + "get_simple_data.php",
-		{attr: attr_selected, table: table_selected, area: area_name, cs_area: active_cs_area.name}, function(data) {
+		{attr: attr_selected, table: table_selected, area: area_name, cs_area: active_cs_area.name, geo_level: active_geo_layers[active_geo_layer_index].level}, function(data) {
 			htmlResult = document.getElementById("data_shown");
 			if(data == "")	 data = "N/A";
 			htmlResult.innerHTML = "<table border=\"1\"><thead><tr><td><b>Area</b></td><td><b>Descriptor name</b></td>" + 
@@ -653,7 +723,7 @@
 		var html_loading = document.getElementById("loading");
 		html_loading.innerHTML = "<small><b>Loading colored map. Please wait... (this may take a few seconds)</b></small>";
 		jQuery.post(server_url + "get_geojson_from_view.php",
-		{attr: attr_selected, table: table_selected, cs_area: active_cs_area.name}, function(data) {
+		{attr: attr_selected, table: table_selected, cs_area: active_cs_area.name, geo_name: active_geo_layers[active_geo_layer_index].name, geo_level: active_geo_layers[active_geo_layer_index].level}, function(data) {
 			show_colored_map(attr_selected,table_selected);
 			html_loading.innerHTML = "<small><b>Map ready</b></small>";			
 		});	
@@ -687,7 +757,11 @@
 				thresholds.push(Math.round(parseFloat(min_descriptor) 
 				+ ((parseFloat(max_descriptor)
 				- parseFloat(min_descriptor))*0.2)));
-				thresholds.push(Math.round(parseFloat(min_descriptor))); 
+				if(Math.round(parseFloat(min_descriptor)) < 0){
+					thresholds.push(0); 
+				}else{
+					thresholds.push(Math.round(parseFloat(min_descriptor))); 
+				}
 				
 				//Create a legend with values for colors in the map
 				var legend = document.getElementById("map_caption");

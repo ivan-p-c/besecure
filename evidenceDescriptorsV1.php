@@ -190,11 +190,13 @@ Place in <geoserver data_dir>/www
 
 	  
         <h3>Evidence for Descriptors Definition</h3>
-		Case study area shown: <select name="select_cs_area" id="select_cs_area"
-		onChange='window.location.href=location.href.substring(0, top.location.href.indexOf("?"))+"?cs_area="+this[this.selectedIndex].value;'>
+		Case study area shown: <select name="select_cs_area" id="select_cs_area" onChange="javascript:update_geo_layers(this[this.selectedIndex].value);">
 		<option value="northern_ireland">Northern Ireland (UK)</option>
 		<option value="london">London (UK)</option>
 		<option value="poznan">Poznan (Poland)</option>
+		</select>
+		Base Geography Layer: <select name="select_geo_layer" id="select_geo_layer">
+		<input type="button" id="reload_page" value="Go" onClick='window.location.href=location.href.substring(0, top.location.href.indexOf("?"))+"?cs_area="+select_cs_area[select_cs_area.selectedIndex].value+"&geo_layer="+select_geo_layer[select_geo_layer.selectedIndex].value' />
 		</select>
 		<div>
 			<div id="map"></div>
